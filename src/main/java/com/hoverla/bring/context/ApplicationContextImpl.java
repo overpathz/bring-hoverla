@@ -3,6 +3,7 @@ package com.hoverla.bring.context;
 import com.hoverla.bring.annotation.Autowired;
 import com.hoverla.bring.annotation.Bean;
 import com.hoverla.bring.exception.ApplicationContextInitializationException;
+import com.hoverla.bring.exception.DefaultConstructorNotFoundException;
 import com.hoverla.bring.exception.NoSuchBeanException;
 import com.hoverla.bring.exception.NoUniqueBeanException;
 import org.reflections.Reflections;
@@ -35,19 +36,23 @@ public class ApplicationContextImpl implements ApplicationContext {
         try {
             initBeans(beanClasses);
             postProcess();
-        } catch (NoSuchMethodException | InvocationTargetException | InstantiationException
-                 | IllegalAccessException e) {
+        } catch (InstantiationException | IllegalAccessException e) {
             throw new ApplicationContextInitializationException(
                 format("ApplicationContext initialization has failed: %s", e.getMessage())
             );
         }
     }
 
-    private void initBeans(Set<Class<?>> beanClasses) throws NoSuchMethodException, InvocationTargetException,
-        InstantiationException, IllegalAccessException {
+    private void initBeans(Set<Class<?>> beanClasses) throws InstantiationException, IllegalAccessException {
         for (Class<?> beanType: beanClasses) {
             String beanName = resolveBeanName(beanType);
-            Object instance = beanType.getConstructor().newInstance();
+            Object instance;
+            try {
+                instance = beanType.getConstructor().newInstance();
+            } catch (InvocationTargetException | NoSuchMethodException e) {
+                throw new DefaultConstructorNotFoundException(format("Default constructor hasn't been found for %s",
+                    beanType.getSimpleName()));
+            }
             beans.put(beanName, instance);
         }
     }

@@ -5,11 +5,13 @@ import com.hoverla.bring.context.fixtures.autowired.success.TestService;
 import com.hoverla.bring.context.fixtures.bean.ChildService;
 import com.hoverla.bring.context.fixtures.bean.NotABean;
 import com.hoverla.bring.context.fixtures.bean.ParentService;
+import com.hoverla.bring.context.fixtures.bean.success.A;
+import com.hoverla.bring.context.fixtures.bean.success.B;
 import com.hoverla.bring.context.fixtures.bean.success.ChildServiceBeanOne;
 import com.hoverla.bring.context.fixtures.bean.success.ChildServiceBeanTwo;
 import com.hoverla.bring.context.fixtures.bean.success.TestBeanWithName;
 import com.hoverla.bring.context.fixtures.bean.success.TestBeanWithoutName;
-import com.hoverla.bring.exception.ApplicationContextInitializationException;
+import com.hoverla.bring.exception.DefaultConstructorNotFoundException;
 import com.hoverla.bring.exception.NoSuchBeanException;
 import com.hoverla.bring.exception.NoUniqueBeanException;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,6 +48,9 @@ class ApplicationContextImplTest {
 
         TestBeanWithoutName beanWithoutName = applicationContext.getBean(TestBeanWithoutName.class);
         assertNotNull(beanWithoutName);
+
+        A aBean = applicationContext.getBean(A.class);
+        assertNotNull(aBean);
     }
 
     @Test
@@ -76,8 +81,12 @@ class ApplicationContextImplTest {
         TestBeanWithName beanWithName = applicationContext.getBean("BeanName", TestBeanWithName.class);
         assertNotNull(beanWithName);
 
-        TestBeanWithoutName beanWithoutName = applicationContext.getBean("testBeanWithoutName", TestBeanWithoutName.class);
+        TestBeanWithoutName beanWithoutName = applicationContext.getBean("testBeanWithoutName",
+            TestBeanWithoutName.class);
         assertNotNull(beanWithoutName);
+
+        B bBean = applicationContext.getBean("C", B.class);
+        assertNotNull(bBean);
     }
 
     @Test
@@ -138,6 +147,7 @@ class ApplicationContextImplTest {
         ApplicationContext autowiringContext =
             new ApplicationContextImpl("com.hoverla.bring.context.fixtures.autowired.success");
         AutowiredService autowiredService = autowiringContext.getBean(AutowiredService.class);
+        assertNotNull(autowiredService);
         TestService testService = autowiringContext.getBean(TestService.class);
         assertEquals("A,B,C", testService.getLetters());
     }
@@ -165,13 +175,11 @@ class ApplicationContextImplTest {
 
     @Test
     @Order(11)
-    @DisplayName("ApplicationContextInitializationException if no public constructor is found")
+    @DisplayName("DefaultConstructorNotFoundException if no default constructor is found")
     void applicationContextInitializationExceptionIfPackageDoesNotExist() {
-        ApplicationContextInitializationException e = assertThrows(ApplicationContextInitializationException.class, () ->
+        DefaultConstructorNotFoundException e = assertThrows(DefaultConstructorNotFoundException.class, () ->
             new ApplicationContextImpl("com.hoverla.bring.context.fixtures.initFailure"));
 
-        assertEquals("ApplicationContext initialization has failed: " +
-            "com.hoverla.bring.context.fixtures.initFailure.ClassWithPrivateConstructor.<init>()", e.getMessage());
-
+        assertEquals("Default constructor hasn't been found for ClassWithoutDefaultConstructor", e.getMessage());
     }
 }
