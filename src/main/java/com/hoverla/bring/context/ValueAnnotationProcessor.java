@@ -2,6 +2,7 @@ package com.hoverla.bring.context;
 
 
 import com.hoverla.bring.annotation.Value;
+import com.hoverla.bring.exception.InitializePropertyException;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -12,7 +13,7 @@ import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toMap;
 
-public class ValueAnnotationProcessor implements PostProcessor{
+public class ValueAnnotationProcessor implements PostProcessor {
 
     private Map<String, String> propertiesMap;
 
@@ -22,8 +23,8 @@ public class ValueAnnotationProcessor implements PostProcessor{
 
     @Override
     public void process(Object beanInstance, ApplicationContext applicationContext) {
-        try {
-            for (Field field : beanInstance.getClass().getDeclaredFields()) {
+        for (Field field : beanInstance.getClass().getDeclaredFields()) {
+            try {
                 if (field.isAnnotationPresent(Value.class)) {
                     String propertyName = field.getAnnotation(Value.class).value();
                     field.setAccessible(true);
@@ -32,11 +33,10 @@ public class ValueAnnotationProcessor implements PostProcessor{
                     } else {
                         field.set(beanInstance, propertiesMap.get(field.getName()));
                     }
-
                 }
+            } catch (IllegalAccessException e) {
+                throw new InitializePropertyException("Can't initialize property #" + field.getName());
             }
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
         }
     }
 
