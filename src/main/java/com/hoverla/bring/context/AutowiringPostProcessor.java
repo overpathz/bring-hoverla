@@ -9,7 +9,6 @@ public class AutowiringPostProcessor implements PostProcessor {
 
     @Override
     public void process(Object beanInstance, ApplicationContext applicationContext) {
-
         for (Field field : beanInstance.getClass().getDeclaredFields()) {
             if (field.isAnnotationPresent(Autowired.class)) {
                 field.setAccessible(true);
@@ -19,7 +18,6 @@ public class AutowiringPostProcessor implements PostProcessor {
                     throw new InitializePropertyException("Can't initialize property #" + field.getName());
                 }
             }
-
         }
     }
 }

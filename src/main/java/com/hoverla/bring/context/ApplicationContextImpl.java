@@ -22,6 +22,8 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 public class ApplicationContextImpl implements ApplicationContext {
     private final Map<String, Object> beans = new ConcurrentHashMap<>();
 
+    private final List<PostProcessor> postProcessors = new ArrayList<>();
+
     public ApplicationContextImpl(String... basePackages) {
         Reflections beanScanner = new Reflections((Object[]) basePackages);
         Set<Class<?>> beanClasses = beanScanner.getTypesAnnotatedWith(Bean.class, true);
@@ -37,6 +39,18 @@ public class ApplicationContextImpl implements ApplicationContext {
             throw new ApplicationContextInitializationException(
                     format("ApplicationContext initialization has failed: %s", e.getMessage())
             );
+        }
+    }
+
+    private void initPostProcessors() {
+        var processorClasses = new Reflections("com.hoverla.bring").getSubTypesOf(PostProcessor.class);
+        for (Class<? extends PostProcessor> aClass : processorClasses) {
+            try {
+                postProcessors.add(aClass.getDeclaredConstructor().newInstance());
+            } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
+                throw new DefaultConstructorNotFoundException(format("Default constructor hasn't been found for %s",
+                        aClass.getSimpleName()));
+            }
         }
     }
 
@@ -56,16 +70,12 @@ public class ApplicationContextImpl implements ApplicationContext {
 
     @SuppressWarnings("java:S3011")
     private void postProcess() throws IllegalAccessException {
+        initPostProcessors();
         Collection<Object> beanInstances = beans.values();
-
-        // TODO shoud inialized by scanner / application context
-        List<PostProcessor> postProcessors = List.of(new AutowiringPostProcessor(), new ValueAnnotationProcessor());
-
         for (Object beanInstance : beanInstances) {
             postProcessors
-                    .forEach(p -> p.process(beanInstance, this));
+                    .forEach(pp -> pp.process(beanInstance, this));
         }
-
     }
 
     private String resolveBeanName(Class<?> type) {
