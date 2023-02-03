@@ -7,6 +7,7 @@ import com.hoverla.bring.exception.InitializePropertyException;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
@@ -42,18 +43,18 @@ public class ValueAnnotationProcessor implements PostProcessor {
     }
 
     private void initPropertiesMap() {
-        try {
-            var urlPath = ClassLoader.getSystemClassLoader().getResource("application.properties");
-            if (urlPath != null) {
-                var path = urlPath.getPath();
-                Stream<String> lines = new BufferedReader(new FileReader(path)).lines();
+        var urlPath = ClassLoader.getSystemClassLoader().getResource("application.properties");
+        if (urlPath != null) {
+            var path = urlPath.getPath();
+            try (var bufferedReader = new BufferedReader(new FileReader(path))) {
+                Stream<String> lines = bufferedReader.lines();
                 this.propertiesMap = lines
                         .map(line -> line.split("="))
                         .collect(toMap(arr -> arr[0].trim(), arr -> arr[1].trim()));
+            } catch (IOException e) {
+                //TODO
+                // log.warn(application.properties wasn't found)
             }
-        } catch (FileNotFoundException e) {
-            //TODO
-            // log.warn(application.properties wasn't found)
         }
     }
 }
