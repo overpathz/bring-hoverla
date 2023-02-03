@@ -10,11 +10,8 @@ import org.reflections.Reflections;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static java.lang.String.format;
@@ -38,20 +35,20 @@ public class ApplicationContextImpl implements ApplicationContext {
             postProcess();
         } catch (InstantiationException | IllegalAccessException e) {
             throw new ApplicationContextInitializationException(
-                format("ApplicationContext initialization has failed: %s", e.getMessage())
+                    format("ApplicationContext initialization has failed: %s", e.getMessage())
             );
         }
     }
 
     private void initBeans(Set<Class<?>> beanClasses) throws InstantiationException, IllegalAccessException {
-        for (Class<?> beanType: beanClasses) {
+        for (Class<?> beanType : beanClasses) {
             String beanName = resolveBeanName(beanType);
             Object instance;
             try {
                 instance = beanType.getConstructor().newInstance();
             } catch (InvocationTargetException | NoSuchMethodException e) {
                 throw new DefaultConstructorNotFoundException(format("Default constructor hasn't been found for %s",
-                    beanType.getSimpleName()));
+                        beanType.getSimpleName()));
             }
             beans.put(beanName, instance);
         }
@@ -61,13 +58,12 @@ public class ApplicationContextImpl implements ApplicationContext {
     private void postProcess() throws IllegalAccessException {
         Collection<Object> beanInstances = beans.values();
 
-        for (Object beanInstance: beanInstances) {
-            for (Field field: beanInstance.getClass().getDeclaredFields()) {
-                if (field.isAnnotationPresent(Autowired.class)) {
-                    field.setAccessible(true);
-                    field.set(beanInstance, getBean(field.getType()));
-                }
-            }
+        // TODO shoud inialized by scanner / application context
+        List<PostProcessor> postProcessors = List.of(new AutowiringPostProcessor(), new ValueAnnotationProcessor());
+
+        for (Object beanInstance : beanInstances) {
+            postProcessors
+                    .forEach(p -> p.process(beanInstance, this));
         }
 
     }
@@ -87,34 +83,34 @@ public class ApplicationContextImpl implements ApplicationContext {
 
         if (beanMap.size() > 1) {
             String matchingBeans = beanMap.entrySet().stream()
-                .map(e -> e.getKey() + ": " + e.getValue().getClass().getSimpleName())
-                .collect(joining(", "));
+                    .map(e -> e.getKey() + ": " + e.getValue().getClass().getSimpleName())
+                    .collect(joining(", "));
             throw new NoUniqueBeanException(format("There is more than one bean matching the %s type: [%s]. " +
-                "Please specify a bean name!", beanType.getSimpleName(), matchingBeans));
+                    "Please specify a bean name!", beanType.getSimpleName(), matchingBeans));
         }
 
 
         return beanMap.entrySet().stream().findFirst()
-            .map(Entry::getValue)
-            .orElseThrow(() -> new NoSuchBeanException(
-                format("Bean with type %s not found", beanType.getSimpleName())
-            ));
+                .map(Entry::getValue)
+                .orElseThrow(() -> new NoSuchBeanException(
+                        format("Bean with type %s not found", beanType.getSimpleName())
+                ));
     }
 
     @Override
     public <T> T getBean(String name, Class<T> beanType) {
         return Optional.ofNullable(beans.get(name))
-            .filter(potentialBean -> beanType.isAssignableFrom(potentialBean.getClass()))
-            .map(beanType::cast)
-            .orElseThrow(() -> new NoSuchBeanException(
-                format("Bean with name %s and type %s not found", name, beanType.getSimpleName())
-            ));
+                .filter(potentialBean -> beanType.isAssignableFrom(potentialBean.getClass()))
+                .map(beanType::cast)
+                .orElseThrow(() -> new NoSuchBeanException(
+                        format("Bean with name %s and type %s not found", name, beanType.getSimpleName())
+                ));
     }
 
     @Override
     public <T> Map<String, T> getAllBeans(Class<T> beanType) {
         return beans.entrySet().stream()
-            .filter(potentialBean -> beanType.isAssignableFrom(potentialBean.getValue().getClass()))
-            .collect(toMap(Entry::getKey, bean -> beanType.cast(bean.getValue())));
+                .filter(potentialBean -> beanType.isAssignableFrom(potentialBean.getValue().getClass()))
+                .collect(toMap(Entry::getKey, bean -> beanType.cast(bean.getValue())));
     }
 }
