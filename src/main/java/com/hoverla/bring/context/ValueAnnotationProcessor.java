@@ -8,6 +8,7 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.lang.reflect.Field;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -15,7 +16,7 @@ import static java.util.stream.Collectors.toMap;
 
 public class ValueAnnotationProcessor implements PostProcessor {
 
-    private Map<String, String> propertiesMap;
+    private Map<String, String> propertiesMap = new HashMap<>();
 
     public ValueAnnotationProcessor() {
         initPropertiesMap();
@@ -42,13 +43,17 @@ public class ValueAnnotationProcessor implements PostProcessor {
 
     private void initPropertiesMap() {
         try {
-            String path = ClassLoader.getSystemClassLoader().getResource("application.properties").getPath();
-            Stream<String> lines = new BufferedReader(new FileReader(path)).lines();
-            this.propertiesMap = lines
-                    .map(line -> line.split("="))
-                    .collect(toMap(arr -> arr[0].trim(), arr -> arr[1].trim()));
+            var urlPath = ClassLoader.getSystemClassLoader().getResource("application.properties");
+            if (urlPath != null) {
+                var path = urlPath.getPath();
+                Stream<String> lines = new BufferedReader(new FileReader(path)).lines();
+                this.propertiesMap = lines
+                        .map(line -> line.split("="))
+                        .collect(toMap(arr -> arr[0].trim(), arr -> arr[1].trim()));
+            }
         } catch (FileNotFoundException e) {
-            throw new RuntimeException("Application properties wasn't found");
+            //TODO
+            // log.warn(application.properties wasn't found)
         }
     }
 }
