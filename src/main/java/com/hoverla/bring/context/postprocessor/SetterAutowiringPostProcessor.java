@@ -7,13 +7,16 @@ import com.hoverla.bring.exception.InvokeMethodException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+/**
+ *
+    Autowired annotation is applied to public methods which starts with 'set'
+* */
 public class SetterAutowiringPostProcessor implements PostProcessor {
 
     @Override
     public void process(Object beanInstance, ApplicationContext applicationContext) {
-        for (Method method : beanInstance.getClass().getDeclaredMethods()) {
+        for (Method method : beanInstance.getClass().getMethods()) {
             if (method.getName().startsWith("set") && method.isAnnotationPresent(Autowired.class)) {
-                method.setAccessible(true);
                 try {
                     Class<?>[] parameterTypes = method.getParameterTypes();
                     Object[] arguments = new Object[parameterTypes.length];
