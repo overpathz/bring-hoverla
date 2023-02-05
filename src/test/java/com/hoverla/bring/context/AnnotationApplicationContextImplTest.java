@@ -19,7 +19,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class ApplicationContextImplTest {
+class AnnotationApplicationContextImplTest {
 
     private static final String CHILD_SERVICE_BEAN_ONE_NAME = "childServiceBeanOne";
     private static final String CHILD_SERVICE_BEAN_TWO_NAME = "childServiceBean";
@@ -28,7 +28,7 @@ class ApplicationContextImplTest {
 
     @BeforeEach
     void init() {
-        applicationContext = new ApplicationContextImpl("com.hoverla.bring.context.fixtures.bean");
+        applicationContext = new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.bean");
     }
 
     @Test
@@ -137,7 +137,7 @@ class ApplicationContextImplTest {
     @DisplayName("Autowiring has been successful")
     void autowiringFieldIsSetCorrectly() {
         ApplicationContext autowiringContext =
-            new ApplicationContextImpl("com.hoverla.bring.context.fixtures.autowired.success");
+            new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.autowired.success");
         AutowiredService autowiredService = autowiringContext.getBean(AutowiredService.class);
         assertNotNull(autowiredService);
         TestService testService = autowiringContext.getBean(TestService.class);
@@ -149,7 +149,7 @@ class ApplicationContextImplTest {
     @DisplayName("NoSuchBeanException is thrown if there is no bean which can be autowired")
     void autowiringFieldIfThereIsNoSuchBean() {
         NoSuchBeanException noSuchBeanException = assertThrows(NoSuchBeanException.class, () ->
-            new ApplicationContextImpl("com.hoverla.bring.context.fixtures.autowired.nosuchbean"));
+            new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.autowired.nosuchbean"));
 
         assertEquals("Bean with type NotABeanService not found", noSuchBeanException.getMessage());
     }
@@ -159,7 +159,7 @@ class ApplicationContextImplTest {
     @DisplayName("NoUniqueBeanException is thrown if there are > 1 bean of the same type for autowiring")
     void autowiringFieldIThereIsNoUniqueBean() {
         NoUniqueBeanException noUniqueBeanException = assertThrows(NoUniqueBeanException.class, () ->
-            new ApplicationContextImpl("com.hoverla.bring.context.fixtures.autowired.nouniquebean"));
+            new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.autowired.nouniquebean"));
         assertEquals("There is more than one bean matching the JustAnotherService type: " +
             "[childServiceOne: ChildServiceOne, childServiceTwo: ChildServiceTwo]. " +
             "Please specify a bean name!", noUniqueBeanException.getMessage());
@@ -170,7 +170,7 @@ class ApplicationContextImplTest {
     @DisplayName("DefaultConstructorNotFoundException if no default constructor is found")
     void applicationContextInitializationExceptionIfPackageDoesNotExist() {
         DefaultConstructorNotFoundException e = assertThrows(DefaultConstructorNotFoundException.class, () ->
-            new ApplicationContextImpl("com.hoverla.bring.context.fixtures.initFailure"));
+            new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.initFailure"));
 
         assertEquals("Default constructor hasn't been found for ClassWithoutDefaultConstructor", e.getMessage());
     }
@@ -181,7 +181,7 @@ class ApplicationContextImplTest {
     void initializePropertiesWithValueAnnotation() {
 
         ApplicationContext autowiringContext =
-                new ApplicationContextImpl("com.hoverla.bring.context.fixtures.value.success");
+                new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.value.success");
         BeanWithValueAnnotation valueBean = autowiringContext.getBean("beanWithValue", BeanWithValueAnnotation.class);
         assertNotNull(valueBean);
         assertEquals("Value message", valueBean.getValueMessage());
@@ -193,7 +193,7 @@ class ApplicationContextImplTest {
     @DisplayName("DefaultConstructorNotFound should be thrown if we have one or more non default constructor")
     void throwNoDEfaultConstructor() {
         DefaultConstructorNotFoundException noSuchBeanException = assertThrows(DefaultConstructorNotFoundException.class, () ->
-                new ApplicationContextImpl("com.hoverla.bring.context.fixtures.value.fail"));
+                new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.value.fail"));
 
     }
 }
