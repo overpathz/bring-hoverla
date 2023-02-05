@@ -6,11 +6,6 @@ import com.hoverla.bring.context.fixtures.bean.ChildService;
 import com.hoverla.bring.context.fixtures.bean.NotABean;
 import com.hoverla.bring.context.fixtures.bean.ParentService;
 import com.hoverla.bring.context.fixtures.bean.success.*;
-import com.hoverla.bring.context.fixtures.setter.fail.ServiceWithIncorrectSetterName;
-import com.hoverla.bring.context.fixtures.setter.fail.ServiceWithPrivateSetter;
-import com.hoverla.bring.context.fixtures.setter.success.Container;
-import com.hoverla.bring.context.fixtures.setter.success.MessageServiceHolder;
-import com.hoverla.bring.context.fixtures.value.fail.BeanWithOneDeclaredConstructor;
 import com.hoverla.bring.context.fixtures.value.success.BeanWithValueAnnotation;
 import com.hoverla.bring.exception.DefaultConstructorNotFoundException;
 import com.hoverla.bring.exception.NoSuchBeanException;
@@ -197,48 +192,8 @@ class AnnotationApplicationContextImplTest {
     @Order(13)
     @DisplayName("DefaultConstructorNotFound should be thrown if we have one or more non default constructor")
     void throwNoDEfaultConstructor() {
-        DefaultConstructorNotFoundException noSuchBeanException = assertThrows(DefaultConstructorNotFoundException.class, () ->
+        assertThrows(DefaultConstructorNotFoundException.class, () ->
                 new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.value.fail"));
 
-    }
-
-    @Test
-    @Order(14)
-    @DisplayName("Setter autowiring has been successful")
-    void autowiringSetterWorksProperly() {
-        ApplicationContext autowiringContext =
-                new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.setter.success");
-        MessageServiceHolder holder = autowiringContext.getBean(MessageServiceHolder.class);
-        assertEquals("some text", holder.getMessageService().getMessage());
-    }
-
-    @Test
-    @Order(15)
-    @DisplayName("Setter with 2 arguments has been successful")
-    void autowiringSetterWith2ArgumentsWorksProperly() {
-        ApplicationContext autowiringContext =
-                new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.setter.success");
-        Container container = autowiringContext.getBean(Container.class);
-        assertEquals("some text", container.getMessageService().getMessage());
-        assertEquals(2, container.getNumberService().getNumber());
-    }
-
-    @Test
-    @Order(16)
-    @DisplayName("Setter with private modified hasn't been successful")
-    void autowiringSetterDoesntWorkForPrivateSetter() {
-        ApplicationContext autowiringContext =
-                new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.setter");
-        ServiceWithPrivateSetter bean = autowiringContext.getBean(ServiceWithPrivateSetter.class);
-        assertNull(bean.getMessageService());
-    }
-    @Test
-    @Order(17)
-    @DisplayName("Setter with with incorrect name hasn't been successful")
-    void autowiringSetterDoesntWorkForIncorrectSetterName() {
-        ApplicationContext autowiringContext =
-                new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.setter");
-        ServiceWithIncorrectSetterName bean = autowiringContext.getBean(ServiceWithIncorrectSetterName.class);
-        assertNull(bean.getMessageService());
     }
 }

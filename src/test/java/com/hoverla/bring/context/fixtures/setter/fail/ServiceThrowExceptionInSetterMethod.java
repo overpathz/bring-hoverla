@@ -2,14 +2,14 @@ package com.hoverla.bring.context.fixtures.setter.fail;
 
 import com.hoverla.bring.annotation.Autowired;
 import com.hoverla.bring.annotation.Bean;
-import com.hoverla.bring.context.fixtures.setter.success.MessageService;
 
 @Bean
-public class ServiceWithPrivateSetter {
+public class ServiceThrowExceptionInSetterMethod {
     private MessageService messageService;
 
     @Autowired
-    private void setMessageService(MessageService messageService) {
+    public void setMessageService(MessageService messageService) {
+        int a = 1/0;
         this.messageService = messageService;
     }
 
