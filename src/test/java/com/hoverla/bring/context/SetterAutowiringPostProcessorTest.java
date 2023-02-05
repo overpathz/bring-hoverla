@@ -1,9 +1,9 @@
 package com.hoverla.bring.context;
 
-import com.hoverla.bring.context.fixtures.setter.success.ServiceWithIncorrectSetterName;
-import com.hoverla.bring.context.fixtures.setter.success.ServiceWithPrivateSetter;
 import com.hoverla.bring.context.fixtures.setter.success.Container;
 import com.hoverla.bring.context.fixtures.setter.success.MessageServiceHolder;
+import com.hoverla.bring.context.fixtures.setter.success.ServiceWithIncorrectSetterName;
+import com.hoverla.bring.context.fixtures.setter.success.ServiceWithPrivateSetter;
 import com.hoverla.bring.exception.InvokeMethodException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Order;
@@ -58,7 +58,8 @@ public class SetterAutowiringPostProcessorTest {
     @Order(5)
     @DisplayName("Setter throw invokeMethodException")
     void autowiringSetterThrowInvokeMethodException() {
-        assertThrows(InvokeMethodException.class, () ->
+        InvokeMethodException exception = assertThrows(InvokeMethodException.class, () ->
                 new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.setter.fail"));
+        assertEquals("Can't invoke 'setMessageService' method", exception.getMessage());
     }
 }

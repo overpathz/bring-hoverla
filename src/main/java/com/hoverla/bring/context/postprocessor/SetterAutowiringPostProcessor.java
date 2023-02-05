@@ -8,9 +8,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 /**
- *
-    Autowired annotation is applied to public methods which starts with 'set'
-* */
+ * Autowired annotation is applied to public methods which starts with 'set'
+ */
 public class SetterAutowiringPostProcessor implements PostProcessor {
 
     @Override
@@ -26,7 +25,7 @@ public class SetterAutowiringPostProcessor implements PostProcessor {
                     }
                     method.invoke(beanInstance, arguments);
                 } catch (InvocationTargetException | IllegalAccessException e) {
-                    throw new InvokeMethodException("Can't invoke method #" + method.getName());
+                    throw new InvokeMethodException(String.format("Can't invoke '%s' method", method.getName()));
                 }
             }
         }
