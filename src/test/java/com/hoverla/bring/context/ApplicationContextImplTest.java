@@ -5,12 +5,8 @@ import com.hoverla.bring.context.fixtures.autowired.success.TestService;
 import com.hoverla.bring.context.fixtures.bean.ChildService;
 import com.hoverla.bring.context.fixtures.bean.NotABean;
 import com.hoverla.bring.context.fixtures.bean.ParentService;
-import com.hoverla.bring.context.fixtures.bean.success.A;
-import com.hoverla.bring.context.fixtures.bean.success.B;
-import com.hoverla.bring.context.fixtures.bean.success.ChildServiceBeanOne;
-import com.hoverla.bring.context.fixtures.bean.success.ChildServiceBeanTwo;
-import com.hoverla.bring.context.fixtures.bean.success.TestBeanWithName;
-import com.hoverla.bring.context.fixtures.bean.success.TestBeanWithoutName;
+import com.hoverla.bring.context.fixtures.bean.success.*;
+import com.hoverla.bring.context.fixtures.value.success.BeanWithValueAnnotation;
 import com.hoverla.bring.exception.DefaultConstructorNotFoundException;
 import com.hoverla.bring.exception.NoSuchBeanException;
 import com.hoverla.bring.exception.NoUniqueBeanException;
@@ -21,11 +17,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class ApplicationContextImplTest {
 
@@ -181,5 +173,27 @@ class ApplicationContextImplTest {
             new ApplicationContextImpl("com.hoverla.bring.context.fixtures.initFailure"));
 
         assertEquals("Default constructor hasn't been found for ClassWithoutDefaultConstructor", e.getMessage());
+    }
+
+    @Test
+    @Order(12)
+    @DisplayName("Properties with value annotation should be initialized from application.properties file")
+    void initializePropertiesWithValueAnnotation() {
+
+        ApplicationContext autowiringContext =
+                new ApplicationContextImpl("com.hoverla.bring.context.fixtures.value.success");
+        BeanWithValueAnnotation valueBean = autowiringContext.getBean("beanWithValue", BeanWithValueAnnotation.class);
+        assertNotNull(valueBean);
+        assertEquals("Value message", valueBean.getValueMessage());
+        assertEquals("My message", valueBean.getMessage());
+    }
+
+    @Test
+    @Order(13)
+    @DisplayName("DefaultConstructorNotFound should be thrown if we have one or more non default constructor")
+    void throwNoDEfaultConstructor() {
+        DefaultConstructorNotFoundException noSuchBeanException = assertThrows(DefaultConstructorNotFoundException.class, () ->
+                new ApplicationContextImpl("com.hoverla.bring.context.fixtures.value.fail"));
+
     }
 }
