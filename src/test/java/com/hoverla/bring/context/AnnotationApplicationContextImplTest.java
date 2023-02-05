@@ -6,6 +6,7 @@ import com.hoverla.bring.context.fixtures.bean.ChildService;
 import com.hoverla.bring.context.fixtures.bean.NotABean;
 import com.hoverla.bring.context.fixtures.bean.ParentService;
 import com.hoverla.bring.context.fixtures.bean.success.*;
+import com.hoverla.bring.context.fixtures.setter.fail.ServiceWithIncorrectSetterName;
 import com.hoverla.bring.context.fixtures.setter.fail.ServiceWithPrivateSetter;
 import com.hoverla.bring.context.fixtures.setter.success.Container;
 import com.hoverla.bring.context.fixtures.setter.success.MessageServiceHolder;
@@ -224,11 +225,20 @@ class AnnotationApplicationContextImplTest {
 
     @Test
     @Order(16)
-    @DisplayName("Setter with 2 arguments has been successful")
+    @DisplayName("Setter with private modified hasn't been successful")
     void autowiringSetterDoesntWorkForPrivateSetter() {
         ApplicationContext autowiringContext =
                 new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.setter");
         ServiceWithPrivateSetter bean = autowiringContext.getBean(ServiceWithPrivateSetter.class);
+        assertNull(bean.getMessageService());
+    }
+    @Test
+    @Order(17)
+    @DisplayName("Setter with with incorrect name hasn't been successful")
+    void autowiringSetterDoesntWorkForIncorrectSetterName() {
+        ApplicationContext autowiringContext =
+                new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.setter");
+        ServiceWithIncorrectSetterName bean = autowiringContext.getBean(ServiceWithIncorrectSetterName.class);
         assertNull(bean.getMessageService());
     }
 }
