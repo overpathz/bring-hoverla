@@ -6,8 +6,10 @@ import com.hoverla.bring.context.fixtures.bean.ChildService;
 import com.hoverla.bring.context.fixtures.bean.NotABean;
 import com.hoverla.bring.context.fixtures.bean.ParentService;
 import com.hoverla.bring.context.fixtures.bean.success.*;
+import com.hoverla.bring.context.fixtures.setter.fail.ServiceWithPrivateSetter;
 import com.hoverla.bring.context.fixtures.setter.success.Container;
 import com.hoverla.bring.context.fixtures.setter.success.MessageServiceHolder;
+import com.hoverla.bring.context.fixtures.value.fail.BeanWithOneDeclaredConstructor;
 import com.hoverla.bring.context.fixtures.value.success.BeanWithValueAnnotation;
 import com.hoverla.bring.exception.DefaultConstructorNotFoundException;
 import com.hoverla.bring.exception.NoSuchBeanException;
@@ -218,5 +220,15 @@ class AnnotationApplicationContextImplTest {
         Container container = autowiringContext.getBean(Container.class);
         assertEquals("some text", container.getMessageService().getMessage());
         assertEquals(2, container.getNumberService().getNumber());
+    }
+
+    @Test
+    @Order(16)
+    @DisplayName("Setter with 2 arguments has been successful")
+    void autowiringSetterDoesntWorkForPrivateSetter() {
+        ApplicationContext autowiringContext =
+                new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.setter");
+        ServiceWithPrivateSetter bean = autowiringContext.getBean(ServiceWithPrivateSetter.class);
+        assertNull(bean.getMessageService());
     }
 }
