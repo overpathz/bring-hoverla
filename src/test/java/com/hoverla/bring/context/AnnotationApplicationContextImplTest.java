@@ -50,7 +50,7 @@ class AnnotationApplicationContextImplTest {
     @DisplayName("NoSuchBeanException is thrown if there is no such bean")
     void getBeanByTypeWhenIfThereIsNoSuchBean() {
         NoSuchBeanException noSuchBeanException =
-            assertThrows(NoSuchBeanException.class, () -> applicationContext.getBean(NotABean.class));
+                assertThrows(NoSuchBeanException.class, () -> applicationContext.getBean(NotABean.class));
         assertEquals("Bean with type NotABean not found", noSuchBeanException.getMessage());
     }
 
@@ -59,11 +59,11 @@ class AnnotationApplicationContextImplTest {
     @DisplayName("NoUniqueBeanException is thrown if there are > 1 bean od the same type")
     void getBeanByTypeIfThereIsADuplicateBean() {
         NoUniqueBeanException noUniqueBeanException =
-            assertThrows(NoUniqueBeanException.class, () -> applicationContext.getBean(ParentService.class));
+                assertThrows(NoUniqueBeanException.class, () -> applicationContext.getBean(ParentService.class));
 
         assertEquals("There is more than one bean matching the ParentService type: " +
-            "[childServiceBeanOne: ChildServiceBeanOne, childServiceBean: ChildServiceBeanTwo]. " +
-            "Please specify a bean name!", noUniqueBeanException.getMessage());
+                "[childServiceBeanOne: ChildServiceBeanOne, childServiceBean: ChildServiceBeanTwo]. " +
+                "Please specify a bean name!", noUniqueBeanException.getMessage());
     }
 
     @Test
@@ -74,7 +74,7 @@ class AnnotationApplicationContextImplTest {
         assertNotNull(beanWithName);
 
         TestBeanWithoutName beanWithoutName = applicationContext.getBean("testBeanWithoutName",
-            TestBeanWithoutName.class);
+                TestBeanWithoutName.class);
         assertNotNull(beanWithoutName);
 
         B bBean = applicationContext.getBean("C", B.class);
@@ -86,15 +86,15 @@ class AnnotationApplicationContextImplTest {
     @DisplayName("NoSuchBeanException is thrown if there is no such bean with a name")
     void getBeanByNameIfThereIsNoSuchBean() {
         NoSuchBeanException noSuchBeanException =
-            assertThrows(NoSuchBeanException.class, () -> applicationContext.getBean("Ho", TestBeanWithName.class));
+                assertThrows(NoSuchBeanException.class, () -> applicationContext.getBean("Ho", TestBeanWithName.class));
         assertEquals("Bean with name Ho and type TestBeanWithName not found", noSuchBeanException.getMessage());
 
         noSuchBeanException =
-            assertThrows(NoSuchBeanException.class, () -> applicationContext.getBean("ver", TestBeanWithoutName.class));
+                assertThrows(NoSuchBeanException.class, () -> applicationContext.getBean("ver", TestBeanWithoutName.class));
         assertEquals("Bean with name ver and type TestBeanWithoutName not found", noSuchBeanException.getMessage());
 
         noSuchBeanException =
-            assertThrows(NoSuchBeanException.class, () -> applicationContext.getBean("la", NotABean.class));
+                assertThrows(NoSuchBeanException.class, () -> applicationContext.getBean("la", NotABean.class));
         assertEquals("Bean with name la and type NotABean not found", noSuchBeanException.getMessage());
     }
 
@@ -103,11 +103,11 @@ class AnnotationApplicationContextImplTest {
     @DisplayName("Bean is successfully retrieved by it's name and superclass")
     void getBeanByNameAndSuperClassReturnsCorrectBean() {
         ChildServiceBeanOne childServiceBeanOne = (ChildServiceBeanOne) applicationContext
-            .getBean(CHILD_SERVICE_BEAN_ONE_NAME, ParentService.class);
+                .getBean(CHILD_SERVICE_BEAN_ONE_NAME, ParentService.class);
         assertNotNull(childServiceBeanOne);
 
         ChildServiceBeanTwo childServiceBeanTwo = (ChildServiceBeanTwo) applicationContext
-            .getBean(CHILD_SERVICE_BEAN_TWO_NAME, ParentService.class);
+                .getBean(CHILD_SERVICE_BEAN_TWO_NAME, ParentService.class);
         assertNotNull(childServiceBeanTwo);
     }
 
@@ -137,7 +137,7 @@ class AnnotationApplicationContextImplTest {
     @DisplayName("Autowiring has been successful")
     void autowiringFieldIsSetCorrectly() {
         ApplicationContext autowiringContext =
-            new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.autowired.success");
+                new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.autowired.success");
         AutowiredService autowiredService = autowiringContext.getBean(AutowiredService.class);
         assertNotNull(autowiredService);
         TestService testService = autowiringContext.getBean(TestService.class);
@@ -149,7 +149,7 @@ class AnnotationApplicationContextImplTest {
     @DisplayName("NoSuchBeanException is thrown if there is no bean which can be autowired")
     void autowiringFieldIfThereIsNoSuchBean() {
         NoSuchBeanException noSuchBeanException = assertThrows(NoSuchBeanException.class, () ->
-            new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.autowired.nosuchbean"));
+                new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.autowired.nosuchbean"));
 
         assertEquals("Bean with type NotABeanService not found", noSuchBeanException.getMessage());
     }
@@ -159,10 +159,10 @@ class AnnotationApplicationContextImplTest {
     @DisplayName("NoUniqueBeanException is thrown if there are > 1 bean of the same type for autowiring")
     void autowiringFieldIThereIsNoUniqueBean() {
         NoUniqueBeanException noUniqueBeanException = assertThrows(NoUniqueBeanException.class, () ->
-            new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.autowired.nouniquebean"));
+                new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.autowired.nouniquebean"));
         assertEquals("There is more than one bean matching the JustAnotherService type: " +
-            "[childServiceOne: ChildServiceOne, childServiceTwo: ChildServiceTwo]. " +
-            "Please specify a bean name!", noUniqueBeanException.getMessage());
+                "[childServiceOne: ChildServiceOne, childServiceTwo: ChildServiceTwo]. " +
+                "Please specify a bean name!", noUniqueBeanException.getMessage());
     }
 
     @Test
@@ -170,7 +170,7 @@ class AnnotationApplicationContextImplTest {
     @DisplayName("DefaultConstructorNotFoundException if no default constructor is found")
     void applicationContextInitializationExceptionIfPackageDoesNotExist() {
         DefaultConstructorNotFoundException e = assertThrows(DefaultConstructorNotFoundException.class, () ->
-            new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.initFailure"));
+                new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.initFailure"));
 
         assertEquals("Default constructor hasn't been found for ClassWithoutDefaultConstructor", e.getMessage());
     }
@@ -192,7 +192,7 @@ class AnnotationApplicationContextImplTest {
     @Order(13)
     @DisplayName("DefaultConstructorNotFound should be thrown if we have one or more non default constructor")
     void throwNoDEfaultConstructor() {
-        DefaultConstructorNotFoundException noSuchBeanException = assertThrows(DefaultConstructorNotFoundException.class, () ->
+        assertThrows(DefaultConstructorNotFoundException.class, () ->
                 new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.value.fail"));
 
     }
