@@ -14,7 +14,7 @@ public class CachedServiceImpl {
     @Cacheable("randomNumber")
     public int getRandomNumber(int number, String name) {
         counter++;
-        return ThreadLocalRandom.current().nextInt(number);
+        return ThreadLocalRandom.current().nextInt(number * 10000);
     }
 
     public int getCounter() {
