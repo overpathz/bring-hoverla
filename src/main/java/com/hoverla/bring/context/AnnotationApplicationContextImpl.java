@@ -6,16 +6,12 @@ import com.hoverla.bring.exception.ApplicationContextInitializationException;
 import com.hoverla.bring.exception.DefaultConstructorNotFoundException;
 import com.hoverla.bring.exception.NoSuchBeanException;
 import com.hoverla.bring.exception.NoUniqueBeanException;
+import lombok.SneakyThrows;
 import org.reflections.Reflections;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.hoverla.bring.exception.ApplicationContextInitializationException.APPLICATION_INITIALIZATION_EXCEPTION;
@@ -31,6 +27,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 public class AnnotationApplicationContextImpl implements ApplicationContext {
     private final Map<String, Object> beans = new ConcurrentHashMap<>();
     private final List<PostProcessor> postProcessors = new ArrayList<>();
+    private final List<ProxyConfigurator> proxyConfigurators = new ArrayList<>();
 
     private static final String BASE_BRING_PACKAGE = "com.hoverla.bring";
 
@@ -41,7 +38,7 @@ public class AnnotationApplicationContextImpl implements ApplicationContext {
         if (beanClasses.isEmpty()) {
             return;
         }
-
+        initProxyConfigurators();
         try {
             initBeans(beanClasses);
             postProcess();
@@ -68,6 +65,13 @@ public class AnnotationApplicationContextImpl implements ApplicationContext {
                 .orElseThrow(() -> new NoSuchBeanException(format(NO_SUCH_BEAN_EXCEPTION_BY_TYPE, beanType.getSimpleName())));
     }
 
+    private Object mapToProxy(Object bean, Class<?> beanType) {
+        for (ProxyConfigurator proxyConfigurator : proxyConfigurators) {
+            bean = proxyConfigurator.replaceWithProxyIfNeeded(bean, beanType);
+        }
+        return bean;
+    }
+
     @Override
     public <T> T getBean(String name, Class<T> beanType) {
         return Optional.ofNullable(beans.get(name))
@@ -89,6 +93,7 @@ public class AnnotationApplicationContextImpl implements ApplicationContext {
             Object instance;
             try {
                 instance = beanType.getConstructor().newInstance();
+                instance = mapToProxy(instance, beanType);
             } catch (InvocationTargetException | NoSuchMethodException e) {
                 throw new DefaultConstructorNotFoundException(format(DEFAULT_CONSTRUCTOR_NOT_FOUND_EXCEPTION, beanType.getSimpleName()));
             }
@@ -122,6 +127,14 @@ public class AnnotationApplicationContextImpl implements ApplicationContext {
             } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
                 throw new DefaultConstructorNotFoundException(format(DEFAULT_CONSTRUCTOR_NOT_FOUND_EXCEPTION, postProcessor.getSimpleName()));
             }
+        }
+    }
+
+    @SneakyThrows
+    private void initProxyConfigurators() {
+        var proxies = new Reflections(BASE_BRING_PACKAGE).getSubTypesOf(ProxyConfigurator.class);
+        for (Class<? extends ProxyConfigurator> proxy : proxies) {
+            proxyConfigurators.add(proxy.getDeclaredConstructor().newInstance());
         }
     }
 }
