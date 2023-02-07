@@ -7,19 +7,18 @@ import com.hoverla.bring.exception.ApplicationContextInitializationException;
 import com.hoverla.bring.exception.DefaultConstructorNotFoundException;
 import com.hoverla.bring.exception.NoSuchBeanException;
 import com.hoverla.bring.exception.NoUniqueBeanException;
-import lombok.SneakyThrows;
 import org.reflections.Reflections;
 
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import static com.hoverla.bring.exception.ApplicationContextInitializationException.APPLICATION_INITIALIZATION_EXCEPTION;
 import static com.hoverla.bring.exception.DefaultConstructorNotFoundException.DEFAULT_CONSTRUCTOR_NOT_FOUND_EXCEPTION;
@@ -28,7 +27,8 @@ import static com.hoverla.bring.exception.NoSuchBeanException.NO_SUCH_BEAN_EXCEP
 import static com.hoverla.bring.exception.NoUniqueBeanException.NO_UNIQUE_BEAN_EXCEPTION;
 import static com.hoverla.bring.exception.NoUniqueBeanException.NO_UNIQUE_PRIMARY_BEAN_EXCEPTION;
 import static java.lang.String.format;
-import static java.util.stream.Collectors.*;
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 public class AnnotationApplicationContextImpl implements ApplicationContext {
