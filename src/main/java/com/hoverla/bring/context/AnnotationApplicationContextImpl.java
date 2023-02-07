@@ -1,31 +1,34 @@
 package com.hoverla.bring.context;
 
 import com.hoverla.bring.annotation.Bean;
+import com.hoverla.bring.annotation.Primary;
 import com.hoverla.bring.context.postprocessor.PostProcessor;
 import com.hoverla.bring.exception.ApplicationContextInitializationException;
 import com.hoverla.bring.exception.DefaultConstructorNotFoundException;
 import com.hoverla.bring.exception.NoSuchBeanException;
 import com.hoverla.bring.exception.NoUniqueBeanException;
+import lombok.SneakyThrows;
 import org.reflections.Reflections;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static com.hoverla.bring.exception.ApplicationContextInitializationException.APPLICATION_INITIALIZATION_EXCEPTION;
 import static com.hoverla.bring.exception.DefaultConstructorNotFoundException.DEFAULT_CONSTRUCTOR_NOT_FOUND_EXCEPTION;
 import static com.hoverla.bring.exception.NoSuchBeanException.NO_SUCH_BEAN_EXCEPTION_BY_NAME_TYPE;
 import static com.hoverla.bring.exception.NoSuchBeanException.NO_SUCH_BEAN_EXCEPTION_BY_TYPE;
 import static com.hoverla.bring.exception.NoUniqueBeanException.NO_UNIQUE_BEAN_EXCEPTION;
+import static com.hoverla.bring.exception.NoUniqueBeanException.NO_UNIQUE_PRIMARY_BEAN_EXCEPTION;
 import static java.lang.String.format;
-import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.*;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 public class AnnotationApplicationContextImpl implements ApplicationContext {
@@ -55,13 +58,8 @@ public class AnnotationApplicationContextImpl implements ApplicationContext {
         Map<String, T> beanMap = getAllBeans(beanType);
 
         if (beanMap.size() > 1) {
-            String matchingBeans = beanMap.entrySet().stream()
-                    .map(e -> e.getKey() + ": " + e.getValue().getClass().getSimpleName())
-                    .collect(joining(", "));
-
-            throw new NoUniqueBeanException(format(NO_UNIQUE_BEAN_EXCEPTION, beanType.getSimpleName(), matchingBeans));
+            return getPrimaryBean(beanMap, beanType);
         }
-
 
         return beanMap.entrySet().stream().findFirst()
                 .map(Entry::getValue)
@@ -119,9 +117,33 @@ public class AnnotationApplicationContextImpl implements ApplicationContext {
         for (Class<? extends PostProcessor> postProcessor : processorClasses) {
             try {
                 postProcessors.add(postProcessor.getDeclaredConstructor().newInstance());
-            } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
+            } catch (NoSuchMethodException | InstantiationException | IllegalAccessException |
+                     InvocationTargetException e) {
                 throw new DefaultConstructorNotFoundException(format(DEFAULT_CONSTRUCTOR_NOT_FOUND_EXCEPTION, postProcessor.getSimpleName()));
             }
         }
+    }
+
+    private <T> T getPrimaryBean(Map<String, T> beanMapByType, Class<T> beanType) {
+        Supplier<String> matchingBeanMessage = getMatchingBeanMessage(beanMapByType);
+
+        Map<String, T> allBeansAnnotatedPrimary = beanMapByType.entrySet().stream()
+                .filter(bean -> bean.getValue().getClass().isAnnotationPresent(Primary.class))
+                .collect(toMap(Entry::getKey, Entry::getValue));
+
+        if(allBeansAnnotatedPrimary.size() > 1) {
+            throw new NoUniqueBeanException(format(NO_UNIQUE_PRIMARY_BEAN_EXCEPTION, allBeansAnnotatedPrimary.keySet()));
+        }
+
+        return allBeansAnnotatedPrimary.keySet().stream()
+                .map(beanMapByType::get)
+                .findFirst()
+                .orElseThrow(() -> new NoUniqueBeanException(format(NO_UNIQUE_BEAN_EXCEPTION, beanType.getSimpleName(), matchingBeanMessage.get())));
+    }
+
+    private<T> Supplier<String> getMatchingBeanMessage(Map<String, T> beanMapByType) {
+        return () -> beanMapByType.entrySet().stream()
+                .map(bean -> bean.getKey() + ": " + bean.getValue().getClass().getSimpleName())
+                .collect(joining(", "));
     }
 }
