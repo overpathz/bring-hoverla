@@ -2,12 +2,14 @@ package com.hoverla.bring.context;
 
 import com.hoverla.bring.annotation.Bean;
 import com.hoverla.bring.context.postprocessor.PostProcessor;
+import com.hoverla.bring.context.proxy.ProxyConfigurator;
 import com.hoverla.bring.exception.ApplicationContextInitializationException;
 import com.hoverla.bring.exception.DefaultConstructorNotFoundException;
 import com.hoverla.bring.exception.NoSuchBeanException;
 import com.hoverla.bring.exception.NoUniqueBeanException;
-import lombok.SneakyThrows;
 import org.reflections.Reflections;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
@@ -25,6 +27,8 @@ import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 public class AnnotationApplicationContextImpl implements ApplicationContext {
+
+    Logger log = LoggerFactory.getLogger(AnnotationApplicationContextImpl.class);
     private final Map<String, Object> beans = new ConcurrentHashMap<>();
     private final List<PostProcessor> postProcessors = new ArrayList<>();
     private final List<ProxyConfigurator> proxyConfigurators = new ArrayList<>();
@@ -123,18 +127,24 @@ public class AnnotationApplicationContextImpl implements ApplicationContext {
         var processorClasses = new Reflections(BASE_BRING_PACKAGE).getSubTypesOf(PostProcessor.class);
         for (Class<? extends PostProcessor> postProcessor : processorClasses) {
             try {
-                postProcessors.add(postProcessor.getDeclaredConstructor().newInstance());
+                var postProcessorInstance = postProcessor.getDeclaredConstructor().newInstance();
+                postProcessors.add(postProcessorInstance);
+                log.info(String.format("Registered %s post processor", postProcessor.getSimpleName()));
             } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
                 throw new DefaultConstructorNotFoundException(format(DEFAULT_CONSTRUCTOR_NOT_FOUND_EXCEPTION, postProcessor.getSimpleName()));
             }
         }
     }
 
-    @SneakyThrows
     private void initProxyConfigurators() {
         var proxies = new Reflections(BASE_BRING_PACKAGE).getSubTypesOf(ProxyConfigurator.class);
         for (Class<? extends ProxyConfigurator> proxy : proxies) {
-            proxyConfigurators.add(proxy.getDeclaredConstructor().newInstance());
+            try {
+                var proxyInstance = proxy.getDeclaredConstructor().newInstance();
+                proxyConfigurators.add(proxyInstance);
+            } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                throw new DefaultConstructorNotFoundException(format(DEFAULT_CONSTRUCTOR_NOT_FOUND_EXCEPTION, proxy.getSimpleName()));
+            }
         }
     }
 }
