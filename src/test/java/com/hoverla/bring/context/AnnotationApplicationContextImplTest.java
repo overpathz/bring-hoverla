@@ -5,6 +5,11 @@ import com.hoverla.bring.context.fixtures.autowired.success.TestService;
 import com.hoverla.bring.context.fixtures.bean.ChildService;
 import com.hoverla.bring.context.fixtures.bean.NotABean;
 import com.hoverla.bring.context.fixtures.bean.ParentService;
+import com.hoverla.bring.context.fixtures.bean.primary.Animal;
+import com.hoverla.bring.context.fixtures.bean.primary.AnimalService;
+import com.hoverla.bring.context.fixtures.bean.primary.Tiger;
+import com.hoverla.bring.context.fixtures.bean.primary.Wolf;
+import com.hoverla.bring.context.fixtures.bean.primary.error.AnimalError;
 import com.hoverla.bring.context.fixtures.bean.success.*;
 import com.hoverla.bring.context.fixtures.value.success.BeanWithValueAnnotation;
 import com.hoverla.bring.exception.DefaultConstructorNotFoundException;
@@ -195,5 +200,53 @@ class AnnotationApplicationContextImplTest {
         assertThrows(DefaultConstructorNotFoundException.class, () ->
                 new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.value.fail"));
 
+    }
+
+    @Test
+    @Order(14)
+    @DisplayName("If the primary bean exists all interface sub-beans should be created")
+    void allBeansShouldAvailableIfPrimaryBeanExist() {
+        ApplicationContext applicationContext = new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.bean.primary");
+        Animal primaryBean = applicationContext.getBean(Animal.class);
+        Wolf wolf = applicationContext.getBean(Wolf.class);
+        Tiger tiger = applicationContext.getBean(Tiger.class);
+
+        assertNotNull(primaryBean);
+        assertNotNull(wolf);
+        assertNotNull(tiger);
+        assertEquals(100, primaryBean.strongPoints());
+        assertEquals(100, tiger.strongPoints());
+        assertEquals(70, wolf.strongPoints());
+    }
+
+    @Test
+    @Order(15)
+    @DisplayName("If two beans with one parent are declared in context it should inject and return the primary bean if present")
+    void shouldReturnPrimaryBean() {
+        ApplicationContext applicationContext = new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.bean.primary");
+        Animal primaryBean = applicationContext.getBean(Animal.class);
+
+        assertNotNull(primaryBean);
+        assertEquals(100, primaryBean.strongPoints());
+    }
+
+    @Test
+    @Order(16)
+    @DisplayName("If annotation @Primary exists should inject the correct bean")
+    void shouldReturnPrimaryBeanInAutowiredField() {
+        ApplicationContext applicationContext = new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.bean.primary");
+        AnimalService animalService = applicationContext.getBean(AnimalService.class);
+        Class<? extends Animal> aClass = animalService.animal.getClass();
+
+        assertNotNull(animalService);
+        assertEquals(Tiger.class, aClass);
+    }
+
+    @Test
+    @Order(17)
+    @DisplayName("Should throw an exception if @Primary annotation exists more than one time exists")
+    void shouldThrowErrorIfPrimaryAnnotationMoreThanOneTimeExists() {
+        ApplicationContext applicationContext = new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.bean.primary.error");
+        assertThrows(NoUniqueBeanException.class, () -> applicationContext.getBean(AnimalError.class));
     }
 }
