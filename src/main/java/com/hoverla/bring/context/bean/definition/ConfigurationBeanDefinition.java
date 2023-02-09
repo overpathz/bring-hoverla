@@ -18,13 +18,9 @@ import java.util.stream.Stream;
 import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
-public class ConfigurationBeanDefinition implements BeanDefinition {
-    private Object instance;
-    private final String name;
+public class ConfigurationBeanDefinition extends AbstractBeanDefinition {
     private final Object configInstance;
     private final Method beanMethod;
-    private final Class<?> type;
-    private final Map<String, BeanDependency> dependencies;
 
     public ConfigurationBeanDefinition(Object configInstance, Method beanMethod) {
         Objects.requireNonNull(configInstance, "Configuration class instance can't be null");
@@ -38,36 +34,11 @@ public class ConfigurationBeanDefinition implements BeanDefinition {
     }
 
     @Override
-    public String name() {
-        return name;
-    }
-
-    @Override
-    public Class<?> type() {
-        return type;
-    }
-
-    @Override
-    public Map<String, BeanDependency> dependencies() {
-        return dependencies;
-    }
-
-    @Override
-    public boolean isInstantiated() {
-        return Objects.nonNull(instance);
-    }
-
-    @Override
     public void instantiate(BeanDefinition... dependencies) {
         if (!isInstantiated()) {
             List<BeanDefinition> dependencyList = new ArrayList<>(List.of(dependencies));
             instance = createInstance(dependencyList);
         }
-    }
-
-    @Override
-    public Object getInstance() {
-        return instance;
     }
 
     @Override

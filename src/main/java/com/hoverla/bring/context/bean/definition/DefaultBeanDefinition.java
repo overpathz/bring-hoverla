@@ -27,13 +27,9 @@ import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.lang3.ArrayUtils.isEmpty;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
-public class DefaultBeanDefinition implements BeanDefinition {
-    private Object instance;
-    private final String name;
+public class DefaultBeanDefinition extends AbstractBeanDefinition {
     private Constructor<?> constructor;
     private List<Field> autowiredFields;
-    private final Class<?> type;
-    private final Map<String, BeanDependency> dependencies;
 
     public DefaultBeanDefinition(Class<?> beanClass) {
         Objects.requireNonNull(beanClass, "Bean class cannot be null");
@@ -43,36 +39,11 @@ public class DefaultBeanDefinition implements BeanDefinition {
     }
 
     @Override
-    public String name() {
-        return name;
-    }
-
-    @Override
-    public Class<?> type() {
-        return type;
-    }
-
-    @Override
-    public Map<String, BeanDependency> dependencies() {
-        return dependencies;
-    }
-
-    @Override
-    public boolean isInstantiated() {
-        return Objects.nonNull(instance);
-    }
-
-    @Override
     public void instantiate(BeanDefinition... dependencies) {
         if (!isInstantiated()) {
             List<BeanDefinition> dependencyList = new ArrayList<>(List.of(dependencies));
             instance = createInstance(dependencyList);
         }
-    }
-
-    @Override
-    public Object getInstance() {
-        return instance;
     }
 
     @Override
