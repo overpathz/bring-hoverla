@@ -15,11 +15,11 @@ import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toMap;
 
-public class ValueAnnotationProcessor implements PostProcessor {
+public class ValueInjectBeanPostProcessor implements BeanPostProcessor {
 
     private Map<String, String> propertiesMap = new HashMap<>();
 
-    public ValueAnnotationProcessor() {
+    public ValueInjectBeanPostProcessor() {
         initPropertiesMap();
     }
 

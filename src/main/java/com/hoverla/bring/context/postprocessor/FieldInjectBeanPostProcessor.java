@@ -6,7 +6,7 @@ import com.hoverla.bring.exception.InitializePropertyException;
 
 import java.lang.reflect.Field;
 
-public class AutowiringPostProcessor implements PostProcessor {
+public class FieldInjectBeanPostProcessor implements BeanPostProcessor {
 
     @Override
     public void process(Object beanInstance, ApplicationContext applicationContext) {

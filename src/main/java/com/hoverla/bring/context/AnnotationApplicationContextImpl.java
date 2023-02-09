@@ -2,21 +2,19 @@ package com.hoverla.bring.context;
 
 import com.hoverla.bring.annotation.Bean;
 import com.hoverla.bring.annotation.Primary;
-import com.hoverla.bring.context.postprocessor.PostProcessor;
+import com.hoverla.bring.context.postprocessor.BeanPostProcessor;
+import com.hoverla.bring.context.proxy.ProxyConfigurator;
 import com.hoverla.bring.exception.ApplicationContextInitializationException;
 import com.hoverla.bring.exception.DefaultConstructorNotFoundException;
 import com.hoverla.bring.exception.NoSuchBeanException;
 import com.hoverla.bring.exception.NoUniqueBeanException;
 import org.reflections.Reflections;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
@@ -32,8 +30,11 @@ import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 public class AnnotationApplicationContextImpl implements ApplicationContext {
+
+    Logger log = LoggerFactory.getLogger(AnnotationApplicationContextImpl.class);
     private final Map<String, Object> beans = new ConcurrentHashMap<>();
-    private final List<PostProcessor> postProcessors = new ArrayList<>();
+    private final List<BeanPostProcessor> postProcessors = new ArrayList<>();
+    private final List<ProxyConfigurator> proxyConfigurators = new ArrayList<>();
 
     private static final String BASE_BRING_PACKAGE = "com.hoverla.bring";
 
@@ -44,7 +45,7 @@ public class AnnotationApplicationContextImpl implements ApplicationContext {
         if (beanClasses.isEmpty()) {
             return;
         }
-
+        initProxyConfigurators();
         try {
             initBeans(beanClasses);
             postProcess();
@@ -64,6 +65,13 @@ public class AnnotationApplicationContextImpl implements ApplicationContext {
         return beanMap.entrySet().stream().findFirst()
                 .map(Entry::getValue)
                 .orElseThrow(() -> new NoSuchBeanException(format(NO_SUCH_BEAN_EXCEPTION_BY_TYPE, beanType.getSimpleName())));
+    }
+
+    private Object mapToProxy(Object bean, Class<?> beanType) {
+        for (ProxyConfigurator proxyConfigurator : proxyConfigurators) {
+            bean = proxyConfigurator.replaceWithProxyIfNeeded(bean, beanType);
+        }
+        return bean;
     }
 
     @Override
@@ -87,6 +95,7 @@ public class AnnotationApplicationContextImpl implements ApplicationContext {
             Object instance;
             try {
                 instance = beanType.getConstructor().newInstance();
+                instance = mapToProxy(instance, beanType);
             } catch (InvocationTargetException | NoSuchMethodException e) {
                 throw new DefaultConstructorNotFoundException(format(DEFAULT_CONSTRUCTOR_NOT_FOUND_EXCEPTION, beanType.getSimpleName()));
             }
@@ -113,12 +122,13 @@ public class AnnotationApplicationContextImpl implements ApplicationContext {
     }
 
     private void initPostProcessors() {
-        var processorClasses = new Reflections(BASE_BRING_PACKAGE).getSubTypesOf(PostProcessor.class);
-        for (Class<? extends PostProcessor> postProcessor : processorClasses) {
+        var processorClasses = new Reflections(BASE_BRING_PACKAGE).getSubTypesOf(BeanPostProcessor.class);
+        for (Class<? extends BeanPostProcessor> postProcessor : processorClasses) {
             try {
-                postProcessors.add(postProcessor.getDeclaredConstructor().newInstance());
-            } catch (NoSuchMethodException | InstantiationException | IllegalAccessException |
-                     InvocationTargetException e) {
+                var postProcessorInstance = postProcessor.getDeclaredConstructor().newInstance();
+                postProcessors.add(postProcessorInstance);
+                log.info(String.format("Registered %s post processor", postProcessor.getSimpleName()));
+            } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
                 throw new DefaultConstructorNotFoundException(format(DEFAULT_CONSTRUCTOR_NOT_FOUND_EXCEPTION, postProcessor.getSimpleName()));
             }
         }
@@ -145,5 +155,17 @@ public class AnnotationApplicationContextImpl implements ApplicationContext {
         return () -> beanMapByType.entrySet().stream()
                 .map(bean -> bean.getKey() + ": " + bean.getValue().getClass().getSimpleName())
                 .collect(joining(", "));
+    }
+
+    private void initProxyConfigurators() {
+        var proxies = new Reflections(BASE_BRING_PACKAGE).getSubTypesOf(ProxyConfigurator.class);
+        for (Class<? extends ProxyConfigurator> proxy : proxies) {
+            try {
+                var proxyInstance = proxy.getDeclaredConstructor().newInstance();
+                proxyConfigurators.add(proxyInstance);
+            } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                throw new DefaultConstructorNotFoundException(format(DEFAULT_CONSTRUCTOR_NOT_FOUND_EXCEPTION, proxy.getSimpleName()));
+            }
+        }
     }
 }
