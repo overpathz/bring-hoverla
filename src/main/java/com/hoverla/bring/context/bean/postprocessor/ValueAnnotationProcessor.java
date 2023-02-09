@@ -1,4 +1,4 @@
-package com.hoverla.bring.context.postprocessor;
+package com.hoverla.bring.context.bean.postprocessor;
 
 
 import com.hoverla.bring.annotation.Value;
@@ -24,6 +24,7 @@ public class ValueAnnotationProcessor implements PostProcessor {
     }
 
     @Override
+    @SuppressWarnings("java:S3011")
     public void process(Object beanInstance, ApplicationContext applicationContext) {
         for (Field field : beanInstance.getClass().getDeclaredFields()) {
             try {
