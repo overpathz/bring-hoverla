@@ -10,7 +10,7 @@ import java.lang.reflect.Method;
 /**
  * Autowired annotation is applied to public methods which starts with 'set'
  */
-public class SetterAutowiringPostProcessor implements PostProcessor {
+public class SetterAutowiringPostProcessor implements BeanPostProcessor {
 
     @Override
     public void process(Object beanInstance, ApplicationContext applicationContext) {

@@ -15,7 +15,7 @@ import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toMap;
 
-public class ValueAnnotationProcessor implements PostProcessor {
+public class ValueAnnotationProcessor implements BeanPostProcessor {
 
     private Map<String, String> propertiesMap = new HashMap<>();
 

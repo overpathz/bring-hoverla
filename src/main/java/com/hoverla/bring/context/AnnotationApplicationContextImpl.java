@@ -2,7 +2,7 @@ package com.hoverla.bring.context;
 
 import com.hoverla.bring.annotation.Bean;
 import com.hoverla.bring.annotation.Primary;
-import com.hoverla.bring.context.postprocessor.PostProcessor;
+import com.hoverla.bring.context.postprocessor.BeanPostProcessor;
 import com.hoverla.bring.context.proxy.ProxyConfigurator;
 import com.hoverla.bring.exception.ApplicationContextInitializationException;
 import com.hoverla.bring.exception.DefaultConstructorNotFoundException;
@@ -33,7 +33,7 @@ public class AnnotationApplicationContextImpl implements ApplicationContext {
 
     Logger log = LoggerFactory.getLogger(AnnotationApplicationContextImpl.class);
     private final Map<String, Object> beans = new ConcurrentHashMap<>();
-    private final List<PostProcessor> postProcessors = new ArrayList<>();
+    private final List<BeanPostProcessor> postProcessors = new ArrayList<>();
     private final List<ProxyConfigurator> proxyConfigurators = new ArrayList<>();
 
     private static final String BASE_BRING_PACKAGE = "com.hoverla.bring";
@@ -122,8 +122,8 @@ public class AnnotationApplicationContextImpl implements ApplicationContext {
     }
 
     private void initPostProcessors() {
-        var processorClasses = new Reflections(BASE_BRING_PACKAGE).getSubTypesOf(PostProcessor.class);
-        for (Class<? extends PostProcessor> postProcessor : processorClasses) {
+        var processorClasses = new Reflections(BASE_BRING_PACKAGE).getSubTypesOf(BeanPostProcessor.class);
+        for (Class<? extends BeanPostProcessor> postProcessor : processorClasses) {
             try {
                 var postProcessorInstance = postProcessor.getDeclaredConstructor().newInstance();
                 postProcessors.add(postProcessorInstance);
