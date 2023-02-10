@@ -1,5 +1,11 @@
-package com.hoverla.bring.context;
+package com.hoverla.bring.context.bean.postprocessor;
 
+import com.hoverla.bring.context.AnnotationApplicationContextImpl;
+import com.hoverla.bring.context.ApplicationContext;
+import com.hoverla.bring.context.bean.definition.BeanDefinitionMapper;
+import com.hoverla.bring.context.bean.dependency.BeanDependencyNameResolver;
+import com.hoverla.bring.context.bean.initializer.BeanInitializer;
+import com.hoverla.bring.context.bean.scanner.BeanAnnotationScanner;
 import com.hoverla.bring.context.fixtures.setter.success.Container;
 import com.hoverla.bring.context.fixtures.setter.success.MessageServiceHolder;
 import com.hoverla.bring.context.fixtures.setter.success.ServiceWithIncorrectSetterName;
@@ -9,16 +15,20 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.util.List;
 
-public class SetterAutowiringPostProcessorTest {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+class SetterAutowiringPostProcessorTest {
 
     @Test
     @Order(1)
     @DisplayName("Setter autowiring has been successful")
     void autowiringSetterWorksProperly() {
         ApplicationContext autowiringContext =
-                new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.setter.success");
+            getApplicationContext("com.hoverla.bring.context.fixtures.setter.success");
         MessageServiceHolder holder = autowiringContext.getBean(MessageServiceHolder.class);
         assertEquals("some text", holder.getMessageService().getMessage());
     }
@@ -28,7 +38,7 @@ public class SetterAutowiringPostProcessorTest {
     @DisplayName("Setter with 2 arguments has been successful")
     void autowiringSetterWith2ArgumentsWorksProperly() {
         ApplicationContext autowiringContext =
-                new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.setter.success");
+            getApplicationContext("com.hoverla.bring.context.fixtures.setter.success");
         Container container = autowiringContext.getBean(Container.class);
         assertEquals("some text", container.getMessageService().getMessage());
         assertEquals(2, container.getNumberService().getNumber());
@@ -39,7 +49,7 @@ public class SetterAutowiringPostProcessorTest {
     @DisplayName("Setter with private modified hasn't been successful")
     void autowiringSetterDoesntWorkForPrivateSetter() {
         ApplicationContext autowiringContext =
-                new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.setter.success");
+            getApplicationContext("com.hoverla.bring.context.fixtures.setter.success");
         ServiceWithPrivateSetter bean = autowiringContext.getBean(ServiceWithPrivateSetter.class);
         assertNull(bean.getMessageService());
     }
@@ -49,7 +59,7 @@ public class SetterAutowiringPostProcessorTest {
     @DisplayName("Setter with with incorrect name hasn't been successful")
     void autowiringSetterDoesntWorkForIncorrectSetterName() {
         ApplicationContext autowiringContext =
-                new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.setter.success");
+            getApplicationContext("com.hoverla.bring.context.fixtures.setter.success");
         ServiceWithIncorrectSetterName bean = autowiringContext.getBean(ServiceWithIncorrectSetterName.class);
         assertNull(bean.getMessageService());
     }
@@ -59,7 +69,13 @@ public class SetterAutowiringPostProcessorTest {
     @DisplayName("Setter throw invokeMethodException")
     void autowiringSetterThrowInvokeMethodException() {
         InvokeMethodException exception = assertThrows(InvokeMethodException.class, () ->
-                new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.setter.fail"));
+            getApplicationContext("com.hoverla.bring.context.fixtures.setter.fail"));
         assertEquals("Can't invoke 'setMessageService' method", exception.getMessage());
+    }
+
+    private ApplicationContext getApplicationContext(String packageToScan) {
+        return new AnnotationApplicationContextImpl(
+            List.of(new BeanAnnotationScanner(new BeanDefinitionMapper(), packageToScan)),
+            new BeanInitializer(new BeanDependencyNameResolver()));
     }
 }

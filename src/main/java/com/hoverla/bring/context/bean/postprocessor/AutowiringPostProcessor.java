@@ -1,4 +1,4 @@
-package com.hoverla.bring.context.postprocessor;
+package com.hoverla.bring.context.bean.postprocessor;
 
 import com.hoverla.bring.annotation.Autowired;
 import com.hoverla.bring.context.ApplicationContext;
@@ -9,6 +9,7 @@ import java.lang.reflect.Field;
 public class AutowiringPostProcessor implements PostProcessor {
 
     @Override
+    @SuppressWarnings("java:S3011")
     public void process(Object beanInstance, ApplicationContext applicationContext) {
         for (Field field : beanInstance.getClass().getDeclaredFields()) {
             if (field.isAnnotationPresent(Autowired.class)) {

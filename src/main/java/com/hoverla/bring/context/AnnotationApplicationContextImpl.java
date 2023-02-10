@@ -1,9 +1,11 @@
 package com.hoverla.bring.context;
 
-import com.hoverla.bring.annotation.Bean;
 import com.hoverla.bring.annotation.Primary;
-import com.hoverla.bring.context.postprocessor.PostProcessor;
-import com.hoverla.bring.exception.ApplicationContextInitializationException;
+import com.hoverla.bring.context.bean.definition.BeanDefinition;
+import com.hoverla.bring.context.bean.definition.BeanDefinitionContainer;
+import com.hoverla.bring.context.bean.initializer.BeanInitializer;
+import com.hoverla.bring.context.bean.scanner.BeanScanner;
+import com.hoverla.bring.context.bean.postprocessor.PostProcessor;
 import com.hoverla.bring.exception.DefaultConstructorNotFoundException;
 import com.hoverla.bring.exception.NoSuchBeanException;
 import com.hoverla.bring.exception.NoUniqueBeanException;
@@ -15,98 +17,77 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
-import static com.hoverla.bring.exception.ApplicationContextInitializationException.APPLICATION_INITIALIZATION_EXCEPTION;
 import static com.hoverla.bring.exception.DefaultConstructorNotFoundException.DEFAULT_CONSTRUCTOR_NOT_FOUND_EXCEPTION;
-import static com.hoverla.bring.exception.NoSuchBeanException.NO_SUCH_BEAN_EXCEPTION_BY_NAME_TYPE;
 import static com.hoverla.bring.exception.NoSuchBeanException.NO_SUCH_BEAN_EXCEPTION_BY_TYPE;
 import static com.hoverla.bring.exception.NoUniqueBeanException.NO_UNIQUE_BEAN_EXCEPTION;
 import static com.hoverla.bring.exception.NoUniqueBeanException.NO_UNIQUE_PRIMARY_BEAN_EXCEPTION;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 public class AnnotationApplicationContextImpl implements ApplicationContext {
-    private final Map<String, Object> beans = new ConcurrentHashMap<>();
     private final List<PostProcessor> postProcessors = new ArrayList<>();
+    private final BeanDefinitionContainer container;
 
     private static final String BASE_BRING_PACKAGE = "com.hoverla.bring";
 
-    public AnnotationApplicationContextImpl(String... basePackages) {
-        Reflections beanScanner = new Reflections((Object[]) basePackages);
-        Set<Class<?>> beanClasses = beanScanner.getTypesAnnotatedWith(Bean.class, true);
+    public AnnotationApplicationContextImpl(List<BeanScanner> scanners, BeanInitializer initializer) {
+        List<BeanDefinition> beanDefinitions = scanPackagesForBeanDefinitions(scanners);
+        //TODO add validation for bean definitions
+        container = new BeanDefinitionContainer(beanDefinitions);
+        initializer.initialize(container);
+        postProcess();
+    }
 
-        if (beanClasses.isEmpty()) {
-            return;
-        }
-
-        try {
-            initBeans(beanClasses);
-            postProcess();
-        } catch (InstantiationException | IllegalAccessException e) {
-            throw new ApplicationContextInitializationException(format(APPLICATION_INITIALIZATION_EXCEPTION, e.getMessage()));
-        }
+    private List<BeanDefinition> scanPackagesForBeanDefinitions(List<BeanScanner> scanners) {
+        return scanners.stream()
+            .map(BeanScanner::scan)
+            .flatMap(List::stream)
+            .collect(toList());
     }
 
     @Override
     public <T> T getBean(Class<T> beanType) {
-        Map<String, T> beanMap = getAllBeans(beanType);
+        List<BeanDefinition> beanDefinitions = container.getBeansAssignableFromType(beanType);
 
-        if (beanMap.size() > 1) {
-            return getPrimaryBean(beanMap, beanType);
+        if (beanDefinitions.size() > 1) {
+            return getPrimaryBean(beanDefinitions, beanType);
         }
 
-        return beanMap.entrySet().stream().findFirst()
-                .map(Entry::getValue)
-                .orElseThrow(() -> new NoSuchBeanException(format(NO_SUCH_BEAN_EXCEPTION_BY_TYPE, beanType.getSimpleName())));
+        return beanDefinitions.stream().findFirst()
+            .map(BeanDefinition::getInstance)
+            .map(beanType::cast)
+            .orElseThrow(() -> new NoSuchBeanException(
+                format(NO_SUCH_BEAN_EXCEPTION_BY_TYPE, beanType.getSimpleName())
+            ));
     }
 
     @Override
     public <T> T getBean(String name, Class<T> beanType) {
-        return Optional.ofNullable(beans.get(name))
-                .filter(potentialBean -> beanType.isAssignableFrom(potentialBean.getClass()))
-                .map(beanType::cast)
-                .orElseThrow(() -> new NoSuchBeanException(format(NO_SUCH_BEAN_EXCEPTION_BY_NAME_TYPE, name, beanType.getSimpleName())));
+        return container.getBeanDefinitionByName(name)
+            .filter(potentialBean -> beanType.isAssignableFrom(potentialBean.getInstance().getClass()))
+            .map(BeanDefinition::getInstance)
+            .map(beanType::cast)
+            .orElseThrow(() -> new NoSuchBeanException(
+                format("Bean with name %s and type %s not found", name, beanType.getSimpleName())
+            ));
     }
 
     @Override
     public <T> Map<String, T> getAllBeans(Class<T> beanType) {
-        return beans.entrySet().stream()
-                .filter(potentialBean -> beanType.isAssignableFrom(potentialBean.getValue().getClass()))
-                .collect(toMap(Entry::getKey, bean -> beanType.cast(bean.getValue())));
-    }
-
-    private void initBeans(Set<Class<?>> beanClasses) throws InstantiationException, IllegalAccessException {
-        for (Class<?> beanType : beanClasses) {
-            String beanName = resolveBeanName(beanType);
-            Object instance;
-            try {
-                instance = beanType.getConstructor().newInstance();
-            } catch (InvocationTargetException | NoSuchMethodException e) {
-                throw new DefaultConstructorNotFoundException(format(DEFAULT_CONSTRUCTOR_NOT_FOUND_EXCEPTION, beanType.getSimpleName()));
-            }
-            beans.put(beanName, instance);
-        }
-    }
-
-    private String resolveBeanName(Class<?> type) {
-        String beanName = type.getAnnotation(Bean.class).value();
-        return isNotBlank(beanName) ? beanName : resolveBeanName(type.getSimpleName());
-    }
-
-    private String resolveBeanName(String typeName) {
-        return typeName.substring(0, 1).toLowerCase() + typeName.substring(1);
+        return container.getBeansAssignableFromType(beanType)
+            .stream()
+            .collect(toMap(BeanDefinition::name, beanDefinition -> beanType.cast(beanDefinition.getInstance())));
     }
 
     @SuppressWarnings("java:S3011")
-    private void postProcess() throws IllegalAccessException {
+    private void postProcess() {
         initPostProcessors();
-        Collection<Object> beanInstances = beans.values();
+        Collection<Object> beanInstances = container.getBeanDefinitions().stream()
+            .map(BeanDefinition::getInstance).collect(toList());
         for (Object beanInstance : beanInstances) {
             postProcessors.forEach(postProcessor -> postProcessor.process(beanInstance, this));
         }
@@ -124,26 +105,27 @@ public class AnnotationApplicationContextImpl implements ApplicationContext {
         }
     }
 
-    private <T> T getPrimaryBean(Map<String, T> beanMapByType, Class<T> beanType) {
-        Supplier<String> matchingBeanMessage = getMatchingBeanMessage(beanMapByType);
+    private <T> T getPrimaryBean(List<BeanDefinition> beanDefinitions, Class<T> beanType) {
+        Supplier<String> matchingBeanMessage = getMatchingBeanMessage(beanDefinitions);
 
-        Map<String, T> allBeansAnnotatedPrimary = beanMapByType.entrySet().stream()
-                .filter(bean -> bean.getValue().getClass().isAnnotationPresent(Primary.class))
-                .collect(toMap(Entry::getKey, Entry::getValue));
+        Map<String, T> allBeansAnnotatedPrimary = beanDefinitions.stream()
+                .filter(beanDefinition -> beanDefinition.type().isAnnotationPresent(Primary.class))
+                .collect(toMap(BeanDefinition::name, beanDefinition -> beanType.cast(beanDefinition.getInstance())));
 
-        if(allBeansAnnotatedPrimary.size() > 1) {
+        if (allBeansAnnotatedPrimary.size() > 1) {
             throw new NoUniqueBeanException(format(NO_UNIQUE_PRIMARY_BEAN_EXCEPTION, allBeansAnnotatedPrimary.keySet()));
         }
 
-        return allBeansAnnotatedPrimary.keySet().stream()
-                .map(beanMapByType::get)
-                .findFirst()
-                .orElseThrow(() -> new NoUniqueBeanException(format(NO_UNIQUE_BEAN_EXCEPTION, beanType.getSimpleName(), matchingBeanMessage.get())));
+        return allBeansAnnotatedPrimary.entrySet().stream().findFirst()
+            .map(Entry::getValue)
+            .orElseThrow(() -> new NoUniqueBeanException(
+                format(NO_UNIQUE_BEAN_EXCEPTION, beanType.getSimpleName(), matchingBeanMessage.get())));
+
     }
 
-    private<T> Supplier<String> getMatchingBeanMessage(Map<String, T> beanMapByType) {
-        return () -> beanMapByType.entrySet().stream()
-                .map(bean -> bean.getKey() + ": " + bean.getValue().getClass().getSimpleName())
+    private Supplier<String> getMatchingBeanMessage(List<BeanDefinition> beanDefinitions) {
+        return () -> beanDefinitions.stream()
+                .map(beanDefinition -> beanDefinition.name() + ": " + beanDefinition.type().getSimpleName())
                 .collect(joining(", "));
     }
 }

@@ -1,45 +1,51 @@
+
 package com.hoverla.bring.context;
 
+import com.hoverla.bring.context.bean.definition.BeanDefinitionMapper;
+import com.hoverla.bring.context.bean.dependency.BeanDependencyNameResolver;
+import com.hoverla.bring.context.bean.initializer.BeanInitializer;
+import com.hoverla.bring.context.bean.scanner.BeanAnnotationScanner;
 import com.hoverla.bring.context.fixtures.autowired.success.AutowiredService;
 import com.hoverla.bring.context.fixtures.autowired.success.TestService;
 import com.hoverla.bring.context.fixtures.bean.ChildService;
 import com.hoverla.bring.context.fixtures.bean.NotABean;
 import com.hoverla.bring.context.fixtures.bean.ParentService;
+import com.hoverla.bring.context.fixtures.bean.success.A;
+import com.hoverla.bring.context.fixtures.bean.success.B;
+import com.hoverla.bring.context.fixtures.bean.success.ChildServiceBeanOne;
+import com.hoverla.bring.context.fixtures.bean.success.ChildServiceBeanTwo;
+import com.hoverla.bring.context.fixtures.bean.success.TestBeanWithName;
+import com.hoverla.bring.context.fixtures.bean.success.TestBeanWithoutName;
 import com.hoverla.bring.context.fixtures.bean.primary.Animal;
 import com.hoverla.bring.context.fixtures.bean.primary.AnimalService;
 import com.hoverla.bring.context.fixtures.bean.primary.Tiger;
 import com.hoverla.bring.context.fixtures.bean.primary.Wolf;
 import com.hoverla.bring.context.fixtures.bean.primary.error.AnimalError;
-import com.hoverla.bring.context.fixtures.bean.success.*;
 import com.hoverla.bring.context.fixtures.value.success.BeanWithValueAnnotation;
-import com.hoverla.bring.exception.DefaultConstructorNotFoundException;
+import com.hoverla.bring.exception.MissingDependencyException;
 import com.hoverla.bring.exception.NoSuchBeanException;
 import com.hoverla.bring.exception.NoUniqueBeanException;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class AnnotationApplicationContextImplTest {
 
-    private static final String CHILD_SERVICE_BEAN_ONE_NAME = "childServiceBeanOne";
+    private static final String CHILD_SERVICE_BEAN_ONE_NAME = ChildServiceBeanOne.class.getName();
     private static final String CHILD_SERVICE_BEAN_TWO_NAME = "childServiceBean";
 
     private ApplicationContext applicationContext;
-
-    @BeforeEach
-    void init() {
-        applicationContext = new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.bean");
-    }
 
     @Test
     @Order(1)
     @DisplayName("Bean is successfully retrieved from the context by it's type")
     void getBeanByClassReturnsCorrectBean() {
+        applicationContext = getApplicationContext("com.hoverla.bring.context.fixtures.bean");
         TestBeanWithName beanWithName = applicationContext.getBean(TestBeanWithName.class);
         assertNotNull(beanWithName);
 
@@ -54,6 +60,7 @@ class AnnotationApplicationContextImplTest {
     @Order(2)
     @DisplayName("NoSuchBeanException is thrown if there is no such bean")
     void getBeanByTypeWhenIfThereIsNoSuchBean() {
+        applicationContext = getApplicationContext("com.hoverla.bring.context.fixtures.bean");
         NoSuchBeanException noSuchBeanException =
                 assertThrows(NoSuchBeanException.class, () -> applicationContext.getBean(NotABean.class));
         assertEquals("Bean with type NotABean not found", noSuchBeanException.getMessage());
@@ -63,22 +70,26 @@ class AnnotationApplicationContextImplTest {
     @Order(3)
     @DisplayName("NoUniqueBeanException is thrown if there are > 1 bean od the same type")
     void getBeanByTypeIfThereIsADuplicateBean() {
+        applicationContext = getApplicationContext("com.hoverla.bring.context.fixtures.bean");
         NoUniqueBeanException noUniqueBeanException =
                 assertThrows(NoUniqueBeanException.class, () -> applicationContext.getBean(ParentService.class));
 
         assertEquals("There is more than one bean matching the ParentService type: " +
-                "[childServiceBeanOne: ChildServiceBeanOne, childServiceBean: ChildServiceBeanTwo]. " +
-                "Please specify a bean name!", noUniqueBeanException.getMessage());
+            "[childServiceBean: ChildServiceBeanTwo, " +
+            "com.hoverla.bring.context.fixtures.bean.success.ChildServiceBeanOne: ChildServiceBeanOne]." +
+            " Please specify a bean name!", noUniqueBeanException.getMessage());
     }
 
     @Test
     @Order(4)
     @DisplayName("Bean is successfully retrieved from the context by it's name")
     void getBeanByNameReturnsCorrectBean() {
+        applicationContext = getApplicationContext("com.hoverla.bring.context.fixtures.bean");
         TestBeanWithName beanWithName = applicationContext.getBean("BeanName", TestBeanWithName.class);
         assertNotNull(beanWithName);
 
-        TestBeanWithoutName beanWithoutName = applicationContext.getBean("testBeanWithoutName",
+        TestBeanWithoutName beanWithoutName = applicationContext
+            .getBean("com.hoverla.bring.context.fixtures.bean.success.TestBeanWithoutName",
                 TestBeanWithoutName.class);
         assertNotNull(beanWithoutName);
 
@@ -90,6 +101,7 @@ class AnnotationApplicationContextImplTest {
     @Order(5)
     @DisplayName("NoSuchBeanException is thrown if there is no such bean with a name")
     void getBeanByNameIfThereIsNoSuchBean() {
+        applicationContext = getApplicationContext("com.hoverla.bring.context.fixtures.bean");
         NoSuchBeanException noSuchBeanException =
                 assertThrows(NoSuchBeanException.class, () -> applicationContext.getBean("Ho", TestBeanWithName.class));
         assertEquals("Bean with name Ho and type TestBeanWithName not found", noSuchBeanException.getMessage());
@@ -107,6 +119,7 @@ class AnnotationApplicationContextImplTest {
     @Order(6)
     @DisplayName("Bean is successfully retrieved by it's name and superclass")
     void getBeanByNameAndSuperClassReturnsCorrectBean() {
+        applicationContext = getApplicationContext("com.hoverla.bring.context.fixtures.bean");
         ChildServiceBeanOne childServiceBeanOne = (ChildServiceBeanOne) applicationContext
                 .getBean(CHILD_SERVICE_BEAN_ONE_NAME, ParentService.class);
         assertNotNull(childServiceBeanOne);
@@ -120,6 +133,7 @@ class AnnotationApplicationContextImplTest {
     @Order(7)
     @DisplayName("Get all beans by type returns the matching objects")
     void getAllBeansReturnsCorrectMap() {
+        applicationContext = getApplicationContext("com.hoverla.bring.context.fixtures.bean");
         Map<String, ParentService> services = applicationContext.getAllBeans(ParentService.class);
 
         assertEquals(2, services.size());
@@ -141,53 +155,57 @@ class AnnotationApplicationContextImplTest {
     @Order(8)
     @DisplayName("Autowiring has been successful")
     void autowiringFieldIsSetCorrectly() {
-        ApplicationContext autowiringContext =
-                new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.autowired.success");
-        AutowiredService autowiredService = autowiringContext.getBean(AutowiredService.class);
+        applicationContext =
+            getApplicationContext("com.hoverla.bring.context.fixtures.autowired.success");
+        AutowiredService autowiredService = applicationContext.getBean(AutowiredService.class);
         assertNotNull(autowiredService);
-        TestService testService = autowiringContext.getBean(TestService.class);
+        TestService testService = applicationContext.getBean(TestService.class);
         assertEquals("A,B,C", testService.getLetters());
     }
 
     @Test
     @Order(9)
-    @DisplayName("NoSuchBeanException is thrown if there is no bean which can be autowired")
+    @DisplayName("MissingDependencyException is thrown if there is no bean which can be autowired")
     void autowiringFieldIfThereIsNoSuchBean() {
-        NoSuchBeanException noSuchBeanException = assertThrows(NoSuchBeanException.class, () ->
-                new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.autowired.nosuchbean"));
+        MissingDependencyException exception = assertThrows(MissingDependencyException.class, () ->
+            getApplicationContext("com.hoverla.bring.context.fixtures.autowired.nosuchbean"));
 
-        assertEquals("Bean with type NotABeanService not found", noSuchBeanException.getMessage());
+        assertEquals("Dependency of type class " +
+            "com.hoverla.bring.context.fixtures.autowired.nosuchbean.NotABeanService and name " +
+            "com.hoverla.bring.context.fixtures.autowired.nosuchbean.NotABeanService hasn't been found for " +
+            "[com.hoverla.bring.context.fixtures.autowired.nosuchbean.NoSuchBeanService] bean", exception.getMessage());
     }
 
     @Test
     @Order(10)
     @DisplayName("NoUniqueBeanException is thrown if there are > 1 bean of the same type for autowiring")
     void autowiringFieldIThereIsNoUniqueBean() {
-        NoUniqueBeanException noUniqueBeanException = assertThrows(NoUniqueBeanException.class, () ->
-                new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.autowired.nouniquebean"));
-        assertEquals("There is more than one bean matching the JustAnotherService type: " +
-                "[childServiceOne: ChildServiceOne, childServiceTwo: ChildServiceTwo]. " +
-                "Please specify a bean name!", noUniqueBeanException.getMessage());
-    }
+        NoUniqueBeanException exception = assertThrows(NoUniqueBeanException.class, () ->
+            getApplicationContext("com.hoverla.bring.context.fixtures.autowired.nouniquebean"));
 
+        assertEquals("There is more than one bean matching the JustAnotherService type: " +
+            "[com.hoverla.bring.context.fixtures.autowired.nouniquebean.ChildServiceTwo: ChildServiceTwo, " +
+            "com.hoverla.bring.context.fixtures.autowired.nouniquebean.ChildServiceOne: ChildServiceOne]." +
+            " Please specify a bean name!", exception.getMessage());
+    }
     @Test
     @Order(11)
-    @DisplayName("DefaultConstructorNotFoundException if no default constructor is found")
+    @DisplayName("MissingDependencyException if no default constructor is found and the dependency can't be found for another one")
     void applicationContextInitializationExceptionIfPackageDoesNotExist() {
-        DefaultConstructorNotFoundException e = assertThrows(DefaultConstructorNotFoundException.class, () ->
-                new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.initFailure"));
+        MissingDependencyException e = assertThrows(MissingDependencyException.class, () ->
+            getApplicationContext("com.hoverla.bring.context.fixtures.initFailure"));
 
-        assertEquals("Default constructor hasn't been found for ClassWithoutDefaultConstructor", e.getMessage());
+        assertEquals("Dependency of type class java.lang.String and name java.lang.String hasn't been found" +
+            " for [com.hoverla.bring.context.fixtures.initFailure.ClassWithoutDefaultConstructor] bean", e.getMessage());
     }
 
     @Test
     @Order(12)
     @DisplayName("Properties with value annotation should be initialized from application.properties file")
     void initializePropertiesWithValueAnnotation() {
-
-        ApplicationContext autowiringContext =
-                new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.value.success");
-        BeanWithValueAnnotation valueBean = autowiringContext.getBean("beanWithValue", BeanWithValueAnnotation.class);
+        applicationContext =
+            getApplicationContext("com.hoverla.bring.context.fixtures.value.success");
+        BeanWithValueAnnotation valueBean = applicationContext.getBean("beanWithValue", BeanWithValueAnnotation.class);
         assertNotNull(valueBean);
         assertEquals("Value message", valueBean.getValueMessage());
         assertEquals("My message", valueBean.getMessage());
@@ -195,18 +213,20 @@ class AnnotationApplicationContextImplTest {
 
     @Test
     @Order(13)
-    @DisplayName("DefaultConstructorNotFound should be thrown if we have one or more non default constructor")
+    @DisplayName("MissingDependencyException should be thrown if we have one or more non default constructor with no beans to autowire")
     void throwNoDEfaultConstructor() {
-        assertThrows(DefaultConstructorNotFoundException.class, () ->
-                new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.value.fail"));
+        MissingDependencyException exception = assertThrows(MissingDependencyException.class, () ->
+            getApplicationContext("com.hoverla.bring.context.fixtures.value.fail"));
 
+        assertEquals("Dependency of type int and name int hasn't been found for " +
+            "[com.hoverla.bring.context.fixtures.value.fail.BeanWithOneDeclaredConstructor] bean", exception.getMessage());
     }
 
     @Test
     @Order(14)
     @DisplayName("If the primary bean exists all interface sub-beans should be created")
     void allBeansShouldAvailableIfPrimaryBeanExist() {
-        ApplicationContext applicationContext = new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.bean.primary");
+        ApplicationContext applicationContext = getApplicationContext("com.hoverla.bring.context.fixtures.bean.primary");
         Animal primaryBean = applicationContext.getBean(Animal.class);
         Wolf wolf = applicationContext.getBean(Wolf.class);
         Tiger tiger = applicationContext.getBean(Tiger.class);
@@ -223,7 +243,7 @@ class AnnotationApplicationContextImplTest {
     @Order(15)
     @DisplayName("If two beans with one parent are declared in context it should inject and return the primary bean if present")
     void shouldReturnPrimaryBean() {
-        ApplicationContext applicationContext = new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.bean.primary");
+        ApplicationContext applicationContext = getApplicationContext("com.hoverla.bring.context.fixtures.bean.primary");
         Animal primaryBean = applicationContext.getBean(Animal.class);
 
         assertNotNull(primaryBean);
@@ -234,7 +254,7 @@ class AnnotationApplicationContextImplTest {
     @Order(16)
     @DisplayName("If annotation @Primary exists should inject the correct bean")
     void shouldReturnPrimaryBeanInAutowiredField() {
-        ApplicationContext applicationContext = new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.bean.primary");
+        ApplicationContext applicationContext = getApplicationContext("com.hoverla.bring.context.fixtures.bean.primary");
         AnimalService animalService = applicationContext.getBean(AnimalService.class);
         Class<? extends Animal> aClass = animalService.animal.getClass();
 
@@ -246,7 +266,14 @@ class AnnotationApplicationContextImplTest {
     @Order(17)
     @DisplayName("Should throw an exception if @Primary annotation exists more than one time exists")
     void shouldThrowErrorIfPrimaryAnnotationMoreThanOneTimeExists() {
-        ApplicationContext applicationContext = new AnnotationApplicationContextImpl("com.hoverla.bring.context.fixtures.bean.primary.error");
+        ApplicationContext applicationContext = getApplicationContext("com.hoverla.bring.context.fixtures.bean.primary.error");
         assertThrows(NoUniqueBeanException.class, () -> applicationContext.getBean(AnimalError.class));
     }
+
+    private ApplicationContext getApplicationContext(String packageToScan) {
+        return new AnnotationApplicationContextImpl(
+            List.of(new BeanAnnotationScanner(new BeanDefinitionMapper(), packageToScan)),
+            new BeanInitializer(new BeanDependencyNameResolver()));
+    }
 }
+

@@ -1,4 +1,4 @@
-package com.hoverla.bring.context.postprocessor;
+package com.hoverla.bring.context.bean.postprocessor;
 
 import com.hoverla.bring.annotation.Autowired;
 import com.hoverla.bring.context.ApplicationContext;
