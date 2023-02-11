@@ -5,6 +5,7 @@ import com.hoverla.bring.context.bean.definition.BeanDefinitionContainer;
 import com.hoverla.bring.exception.BeanInstanceCreationException;
 import com.hoverla.bring.exception.MissingDependencyException;
 import com.hoverla.bring.exception.NoUniqueBeanException;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nullable;
@@ -16,19 +17,25 @@ import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import static com.hoverla.bring.exception.MissingDependencyException.*;
+import static com.hoverla.bring.exception.MissingDependencyException.MISSING_DEPENDENCY_EXCEPTION;
 import static com.hoverla.bring.exception.NoUniqueBeanException.NO_UNIQUE_BEAN_EXCEPTION;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.joining;
 
+@Slf4j
 public class BeanDependencyNameResolver {
     public void resolveDependencyNames(BeanDefinitionContainer container) {
+        log.debug("Resolving dependency names for each bean definition before initialization");
+
         for (BeanDefinition beanDefinition : container.getBeanDefinitions()) {
             Map<String, BeanDependency> beanDependencies = beanDefinition.dependencies();
 
             if (beanDependencies.isEmpty()) {
                 continue;
             }
+
+            log.trace("Verifying names of {} dependencies of bean definition {} - {} ",
+                beanDependencies.size(), beanDefinition.name(), beanDefinition.type().getName());
 
             List<Pair<String, String>> oldToNewNames = beanDependencies.values()
                 .stream()
@@ -65,6 +72,10 @@ public class BeanDependencyNameResolver {
             return null;
         }
 
+        log.debug("Resolving dependency: {}. Trying to find the matching bean definition by type: {} ",
+            dependencyName, dependencyType.getName());
+
+
         List<BeanDefinition> sameTypeBeans = container.getBeansWithExactType(dependencyType);
 
         List<BeanDefinition> sameTypeBeansCopy = new ArrayList<>(sameTypeBeans);
@@ -89,8 +100,14 @@ public class BeanDependencyNameResolver {
 
         String newDependencyName = matchingDependency.name();
         if (newDependencyName.equals(dependencyName)) {
+            log.debug("Replacement is not needed. Dependency has the same default name of field/parameter");
             return null;
         }
+
+        log.debug("Replacing the default name '{}' with '{}' for bean definition with type {}, which is a dependency of " +
+                "bean with name '{}' and type {}",
+            dependencyName, newDependencyName, matchingDependency.type().getName(), rootDefinition.name(),
+            rootDefinition.type().getName());
 
         return Pair.of(dependencyName, newDependencyName);
     }
@@ -113,6 +130,7 @@ public class BeanDependencyNameResolver {
     private BeanDefinition findMatchingDependency(List<BeanDefinition> dependencies, BeanDependency targetDependency,
                                                   BeanDefinition rootDefinition) {
         if (dependencies.size() > 1) {
+            log.trace("Found more than one matching bean definition. Need to find the @Primary bean definition");
             Supplier<String> errorMessageSupplier = getMatchingBeanMessage(dependencies);
 
             return dependencies.stream()

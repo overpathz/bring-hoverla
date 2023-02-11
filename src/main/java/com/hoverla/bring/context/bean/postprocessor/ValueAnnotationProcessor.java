@@ -4,6 +4,7 @@ package com.hoverla.bring.context.bean.postprocessor;
 import com.hoverla.bring.annotation.Value;
 import com.hoverla.bring.context.ApplicationContext;
 import com.hoverla.bring.exception.InitializePropertyException;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -15,6 +16,7 @@ import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toMap;
 
+@Slf4j
 public class ValueAnnotationProcessor implements PostProcessor {
 
     private Map<String, String> propertiesMap = new HashMap<>();
@@ -29,6 +31,7 @@ public class ValueAnnotationProcessor implements PostProcessor {
         for (Field field : beanInstance.getClass().getDeclaredFields()) {
             try {
                 if (field.isAnnotationPresent(Value.class)) {
+                    log.trace("Trying to set value from @Value annotation for field '{}'", field.getName());
                     String propertyName = field.getAnnotation(Value.class).value();
                     field.setAccessible(true);
                     if (!propertyName.isEmpty()) {
@@ -36,6 +39,8 @@ public class ValueAnnotationProcessor implements PostProcessor {
                     } else {
                         field.set(beanInstance, propertiesMap.get(field.getName()));
                     }
+                    log.debug("The field '{}' of bean '{}' has been set to '{}'", field.getName(),
+                        beanInstance.getClass().getName(), field.get(beanInstance));
                 }
             } catch (IllegalAccessException e) {
                 throw new InitializePropertyException("Can't initialize property #" + field.getName());

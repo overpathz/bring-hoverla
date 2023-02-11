@@ -5,6 +5,7 @@ import com.hoverla.bring.annotation.Primary;
 import com.hoverla.bring.context.bean.dependency.BeanDependency;
 import com.hoverla.bring.context.util.ResolveDependenciesUtil;
 import com.hoverla.bring.exception.BeanInstanceCreationException;
+import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -18,6 +19,7 @@ import java.util.stream.Stream;
 import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
+@Slf4j
 public class ConfigurationBeanDefinition extends AbstractBeanDefinition {
     private final Object configInstance;
     private final Method beanMethod;
@@ -25,19 +27,30 @@ public class ConfigurationBeanDefinition extends AbstractBeanDefinition {
     public ConfigurationBeanDefinition(Object configInstance, Method beanMethod) {
         Objects.requireNonNull(configInstance, "Configuration class instance can't be null");
         Objects.requireNonNull(beanMethod, "Configuration bean method can't be null");
-
+        log.debug("Creating the bean definition from method '{}'", beanMethod);
         this.configInstance = configInstance;
         this.beanMethod = beanMethod;
+
         this.name = resolveName(beanMethod);
+        log.trace("Bean name is '{}'", name);
+
         this.type = getType(beanMethod);
+        log.trace("'{}' bean type is '{}'", name, type);
+
         this.dependencies = resolveDependencies(beanMethod);
+        log.trace("'{}' bean dependencies are {}", name, dependencies);
     }
 
     @Override
     public void instantiate(BeanDefinition... dependencies) {
         if (!isInstantiated()) {
+            log.debug("Instantiating bean: '{}' of type {}", name, type.getName());
+            Map<String, Class<?>> dependenciesMap = Stream.of(dependencies)
+                .collect(toMap(BeanDefinition::name, BeanDefinition::type));
+            log.trace("Bean '{}' of type {} has the following dependencies: {}", name, type.getName(), dependenciesMap);
             List<BeanDefinition> dependencyList = new ArrayList<>(List.of(dependencies));
             instance = createInstance(dependencyList);
+            log.debug("Bean '{}' of type {} has been instantiated", name, type.getName());
         }
     }
 

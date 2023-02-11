@@ -114,14 +114,14 @@ class ConfigurationBeanDefinitionTest {
         long n = 101L;
         BeanDefinition firstDependency = mock(BeanDefinition.class);
         when(firstDependency.getInstance()).thenReturn(n);
+        when(firstDependency.name()).thenReturn("n");
         doReturn(long.class).when(firstDependency).type();
-
 
         String s = "23";
         BeanDefinition secondDependency = mock(BeanDefinition.class);
         when(secondDependency.getInstance()).thenReturn(s);
+        when(secondDependency.name()).thenReturn("s");
         doReturn(String.class).when(secondDependency).type();
-
 
         var beanDefinition = new ConfigurationBeanDefinition(testConfiguration, method);
 
