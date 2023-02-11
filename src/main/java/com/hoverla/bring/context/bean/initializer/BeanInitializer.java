@@ -13,10 +13,14 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import static com.hoverla.bring.exception.NoSuchBeanException.NO_SUCH_BEAN_EXCEPTION_BY_NAME_TYPE;
+import static com.hoverla.bring.common.StringConstants.CAN_NOT_INITIALIZE_BEANS_EXCEPTION;
+import static com.hoverla.bring.common.StringConstants.NO_SUCH_BEAN_EXCEPTION_BY_NAME_TYPE;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toMap;
 
+/**
+ * {@link BeanInitializer} this class using for initialize beans.
+ */
 @Slf4j
 @RequiredArgsConstructor
 public class BeanInitializer {
@@ -31,7 +35,7 @@ public class BeanInitializer {
         try {
             beanDefinitions.forEach(beanDefinition -> doInitialize(beanDefinition, container));
         } catch (Exception ex) {
-            throw new BeanInitializePhaseException("Can't initialize beans", ex);
+            throw new BeanInitializePhaseException(CAN_NOT_INITIALIZE_BEANS_EXCEPTION, ex);
         }
     }
 

@@ -2,6 +2,7 @@ package com.hoverla.bring.context.bean.scanner;
 
 import com.hoverla.bring.annotation.Bean;
 import com.hoverla.bring.annotation.Configuration;
+import com.hoverla.bring.context.ApplicationContext;
 import com.hoverla.bring.context.bean.definition.BeanDefinitionMapper;
 import com.hoverla.bring.context.bean.definition.BeanDefinition;
 import lombok.SneakyThrows;
@@ -17,13 +18,18 @@ import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 
+/**
+ * *{@link BeanAnnotationScanner} using for scan packages to find classes annotated with {@link Configuration}
+ * and create it at {@link ApplicationContext}
+ *
+ * @see Bean
+ */
 @Slf4j
 public class ConfigurationBeanScanner implements BeanScanner {
     private final String[] packagesToScan;
     private final BeanDefinitionMapper mapper;
 
-    public ConfigurationBeanScanner(BeanDefinitionMapper mapper,
-                                         String... packagesToScan) {
+    public ConfigurationBeanScanner(BeanDefinitionMapper mapper, String... packagesToScan) {
         this.packagesToScan = packagesToScan;
         this.mapper = mapper;
     }
@@ -44,24 +50,24 @@ public class ConfigurationBeanScanner implements BeanScanner {
         log.debug("{} classes annotated with '@Configuration' have been found", configurationClasses.size());
 
         return configurationClasses.stream()
-            .map(this::scanBeanConfigMethods)
-            .flatMap(List::stream)
-            .collect(toList());
+                .map(this::scanBeanConfigMethods)
+                .flatMap(List::stream)
+                .collect(toList());
     }
 
     private List<BeanDefinition> scanBeanConfigMethods(Class<?> configurationClass) {
         //TODO add validation for @Configuration class
-        Object configuration = createConfigurationInstance(configurationClass);
+        Object configurationInstance = createConfigurationInstance(configurationClass);
 
         return resolveBeanMethods(configurationClass).stream()
-            .map(method -> mapper.mapToBeanDefinition(configuration, method))
-            .collect(toList());
+                .map(method -> mapper.mapToBeanDefinition(configurationInstance, method))
+                .collect(toList());
     }
 
     private List<Method> resolveBeanMethods(Class<?> configClass) {
         return Stream.of(configClass.getMethods())
-            .filter(m -> m.isAnnotationPresent(Bean.class))
-            .collect(toList());
+                .filter(method -> method.isAnnotationPresent(Bean.class))
+                .collect(toList());
     }
 
     @SneakyThrows

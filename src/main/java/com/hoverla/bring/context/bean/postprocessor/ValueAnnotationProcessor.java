@@ -1,6 +1,6 @@
 package com.hoverla.bring.context.bean.postprocessor;
 
-
+import com.hoverla.bring.annotation.Bean;
 import com.hoverla.bring.annotation.Value;
 import com.hoverla.bring.context.ApplicationContext;
 import com.hoverla.bring.exception.InitializePropertyException;
@@ -16,6 +16,12 @@ import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toMap;
 
+/**
+ * ValueAnnotationProcessor using to activate features to inject value from the configuration file
+ * to the field.
+ *
+ * @see Bean
+ */
 @Slf4j
 public class ValueAnnotationProcessor implements PostProcessor {
 

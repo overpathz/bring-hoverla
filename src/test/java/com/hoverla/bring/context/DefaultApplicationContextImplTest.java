@@ -38,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class AnnotationApplicationContextImplTest {
+class DefaultApplicationContextImplTest {
 
     private static final String CHILD_SERVICE_BEAN_ONE_NAME = ChildServiceBeanOne.class.getName();
     private static final String CHILD_SERVICE_BEAN_TWO_NAME = "childServiceBean";
@@ -275,7 +275,7 @@ class AnnotationApplicationContextImplTest {
     }
 
     private ApplicationContext getApplicationContext(String packageToScan) {
-        return new AnnotationApplicationContextImpl(
+        return new DefaultApplicationContextImpl(
             List.of(new BeanAnnotationScanner(new BeanDefinitionMapper(), packageToScan)),
             new BeanInitializer(new BeanDependencyNameResolver()));
     }

@@ -20,7 +20,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class BeanNameResolverTest {
+class BeanDependencyNameResolverTest {
     private BeanDependencyNameResolver nameResolver;
 
     @BeforeEach

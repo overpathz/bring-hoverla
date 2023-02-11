@@ -1,9 +1,10 @@
 package com.hoverla.bring.context.bean.scanner;
 
 import com.hoverla.bring.annotation.Bean;
-import com.hoverla.bring.context.bean.definition.BeanDefinitionMapper;
+import com.hoverla.bring.context.ApplicationContext;
 import com.hoverla.bring.context.bean.definition.BeanDefinition;
 import lombok.extern.slf4j.Slf4j;
+import com.hoverla.bring.context.bean.definition.BeanDefinitionMapper;
 import org.reflections.Reflections;
 
 import java.util.Arrays;
@@ -12,13 +13,18 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * {@link BeanAnnotationScanner} using for scan packages to find classes annotated with {@link Bean}
+ * and create it at {@link ApplicationContext}
+ *
+ * @see Bean
+ */
 @Slf4j
-public class BeanAnnotationScanner implements BeanScanner{
+public class BeanAnnotationScanner implements BeanScanner {
     private final BeanDefinitionMapper mapper;
     private final String[] packagesToScan;
 
-    public BeanAnnotationScanner(BeanDefinitionMapper mapper,
-                                 String... packagesToScan) {
+    public BeanAnnotationScanner(BeanDefinitionMapper mapper, String... packagesToScan) {
         this.mapper = mapper;
         this.packagesToScan = packagesToScan;
     }
@@ -39,7 +45,7 @@ public class BeanAnnotationScanner implements BeanScanner{
 
         //TODO add validation for bean classes
         return beanClasses.stream()
-            .map(mapper::mapToBeanDefinition)
-            .collect(Collectors.toList());
+                .map(mapper::mapToBeanDefinition)
+                .collect(Collectors.toList());
     }
 }

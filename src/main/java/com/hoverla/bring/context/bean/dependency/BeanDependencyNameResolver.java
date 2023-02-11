@@ -1,5 +1,7 @@
 package com.hoverla.bring.context.bean.dependency;
 
+import com.hoverla.bring.annotation.Bean;
+import com.hoverla.bring.annotation.Primary;
 import com.hoverla.bring.context.bean.definition.BeanDefinition;
 import com.hoverla.bring.context.bean.definition.BeanDefinitionContainer;
 import com.hoverla.bring.exception.BeanInstanceCreationException;
@@ -17,11 +19,15 @@ import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import static com.hoverla.bring.exception.MissingDependencyException.MISSING_DEPENDENCY_EXCEPTION;
-import static com.hoverla.bring.exception.NoUniqueBeanException.NO_UNIQUE_BEAN_EXCEPTION;
+import static com.hoverla.bring.common.StringConstants.BEAN_INSTANCE_CREATION_SAME_CANDIDATE_EXCEPTION;
+import static com.hoverla.bring.common.StringConstants.MISSING_DEPENDENCY_EXCEPTION;
+import static com.hoverla.bring.common.StringConstants.NO_UNIQUE_BEAN_EXCEPTION;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.joining;
 
+/**
+ * {@link BeanDependencyNameResolver} its util class using to resolve {@link BeanDependency} names.
+ */
 @Slf4j
 public class BeanDependencyNameResolver {
     public void resolveDependencyNames(BeanDefinitionContainer container) {
@@ -47,8 +53,7 @@ public class BeanDependencyNameResolver {
 
             oldToNewNames.forEach(namePair -> replaceOldName(namePair, beanDependencies));
             if (oldDependencies.size() != beanDependencies.size()) {
-                throw new BeanInstanceCreationException(format("Bean named `%s` has a supertype and one of its subtypes" +
-                    " in dependencies and they have the same candidate for injection", beanDefinition.name()));
+                throw new BeanInstanceCreationException(format(BEAN_INSTANCE_CREATION_SAME_CANDIDATE_EXCEPTION, beanDefinition.name()));
             }
         }
     }
@@ -61,6 +66,18 @@ public class BeanDependencyNameResolver {
         beanDependencies.put(newName, oldDependency);
     }
 
+    /**
+     * In this method we are resolving the rootDefinition dependency name. By default, it's the class name,
+     * but using the {@link Bean} annotation, we can set another name for the bean definition.
+     * If that's the case, we should go through the matching beans from container.
+     * If there is more than one matching bean, we should select the {@link Primary} bean.
+     * If there are zero matching beans, we should throw an exception
+     *
+     * @param targetDependency the dependency we're trying to inject into rootDefinition
+     * @param rootDefinition the bean definition in which we try to inject the targetDependency
+     * @param container the bean definition container
+     * @return pair of ola and new name of rootDefinition dependency
+     */
     @Nullable
     private Pair<String, String> resolveDependencyName(BeanDependency targetDependency,
                                                        BeanDefinition rootDefinition,
@@ -75,15 +92,11 @@ public class BeanDependencyNameResolver {
         log.debug("Resolving dependency: {}. Trying to find the matching bean definition by type: {} ",
             dependencyName, dependencyType.getName());
 
-
         List<BeanDefinition> sameTypeBeans = container.getBeansWithExactType(dependencyType);
 
         List<BeanDefinition> sameTypeBeansCopy = new ArrayList<>(sameTypeBeans);
-        sameTypeBeansCopy.remove(rootDefinition);
-
         Optional<BeanDefinition> optionalDependency;
         optionalDependency = findMatchingDependencyFirstTry(sameTypeBeansCopy);
-
         BeanDefinition matchingDependency;
         if (optionalDependency.isEmpty()) {
             List<BeanDefinition> assignableBeans = container.getBeansAssignableFromType(dependencyType);

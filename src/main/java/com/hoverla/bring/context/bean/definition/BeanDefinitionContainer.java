@@ -9,13 +9,16 @@ import java.util.function.Function;
 import static java.util.stream.Collectors.toConcurrentMap;
 import static java.util.stream.Collectors.toList;
 
+/**
+ * This class is wrapper for {@link BeanDefinition} represented by Map<String, BeanDefinition> beanDefinitions
+ */
 public class BeanDefinitionContainer {
     private final Map<String, BeanDefinition> beanDefinitions;
 
     public BeanDefinitionContainer(List<BeanDefinition> beanDefinitions) {
         this.beanDefinitions = beanDefinitions
-            .stream()
-            .collect(toConcurrentMap(BeanDefinition::name, Function.identity()));
+                .stream()
+                .collect(toConcurrentMap(BeanDefinition::name, Function.identity()));
     }
 
     public Optional<BeanDefinition> getBeanDefinitionByName(String name) {
@@ -24,20 +27,19 @@ public class BeanDefinitionContainer {
 
     public List<BeanDefinition> getBeansAssignableFromType(Class<?> type) {
         return beanDefinitions.values()
-            .stream()
-            .filter(bd -> type.isAssignableFrom(bd.type()))
-            .collect(toList());
+                .stream()
+                .filter(beanDefinition -> type.isAssignableFrom(beanDefinition.type()))
+                .collect(toList());
     }
 
     public List<BeanDefinition> getBeansWithExactType(Class<?> type) {
         return beanDefinitions.values()
-            .stream()
-            .filter(bd -> type.equals(bd.type()))
-            .collect(toList());
+                .stream()
+                .filter(beanDefinition -> type.equals(beanDefinition.type()))
+                .collect(toList());
     }
 
     public Collection<BeanDefinition> getBeanDefinitions() {
         return beanDefinitions.values();
     }
-
 }
