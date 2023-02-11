@@ -2,13 +2,12 @@ package com.hoverla.bring.context.bean.definition;
 
 import com.hoverla.bring.annotation.Autowired;
 import com.hoverla.bring.annotation.Bean;
+import com.hoverla.bring.annotation.Configuration;
 import com.hoverla.bring.annotation.Primary;
 import com.hoverla.bring.context.bean.dependency.BeanDependency;
 import com.hoverla.bring.context.util.ResolveDependenciesUtil;
 import com.hoverla.bring.exception.BeanDependencyInjectionException;
 import com.hoverla.bring.exception.BeanInstanceCreationException;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Constructor;
@@ -30,6 +29,12 @@ import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.lang3.ArrayUtils.isEmpty;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
+/**
+ * This class describes the internals of a {@link Bean} created by default approach
+ * and provides a basic BeanDefinition implementation.
+ * <p>
+ * @see Configuration
+ */
 @Slf4j
 public class DefaultBeanDefinition extends AbstractBeanDefinition {
     private Constructor<?> constructor;
@@ -100,7 +105,7 @@ public class DefaultBeanDefinition extends AbstractBeanDefinition {
         if (isEmpty(constructorParams)) {
             return emptyMap();
         }
-        
+
         List<String> paramNames = Stream.of(constructorParams).map(Parameter::getName).collect(Collectors.toList());
         log.debug("Constructor of class {} has the following parameters: {}",
             constructor.getDeclaringClass().getSimpleName(), paramNames);
@@ -118,7 +123,7 @@ public class DefaultBeanDefinition extends AbstractBeanDefinition {
         }
         List<String> autowiredFieldNames = autowiredFields.stream().map(Field::getName).collect(Collectors.toList());
         log.debug("Class {} has the following autowired fields: {}", beanClass.getSimpleName(), autowiredFieldNames);
-        
+
         return autowiredFields.stream()
                 .map(BeanDependency::fromField)
                 .collect(toMap(BeanDependency::getName, identity()));
@@ -144,7 +149,15 @@ public class DefaultBeanDefinition extends AbstractBeanDefinition {
         }
     }
 
-    @SneakyThrows
+    private Object doCreateInstance(List<BeanDefinition> dependencies) {
+        Object beanInstance = createInstanceUsingConstructor(dependencies);
+
+        if (!dependencies.isEmpty()) {
+            doFieldAutowiring(beanInstance, dependencies);
+        }
+        return beanInstance;
+    }
+
     private Object createInstanceUsingConstructor(List<BeanDefinition> dependencies) {
         if (constructor.getParameterCount() == 0) {
             try {

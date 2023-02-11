@@ -9,6 +9,9 @@ import java.util.function.Function;
 import static java.util.stream.Collectors.toConcurrentMap;
 import static java.util.stream.Collectors.toList;
 
+/**
+ * This class is wrapper for {@link BeanDefinition} represented by Map<String, BeanDefinition> beanDefinitions
+ */
 public class BeanDefinitionContainer {
     private final Map<String, BeanDefinition> beanDefinitions;
 

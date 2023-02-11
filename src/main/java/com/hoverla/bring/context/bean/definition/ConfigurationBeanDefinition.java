@@ -1,6 +1,7 @@
 package com.hoverla.bring.context.bean.definition;
 
 import com.hoverla.bring.annotation.Bean;
+import com.hoverla.bring.annotation.Configuration;
 import com.hoverla.bring.annotation.Primary;
 import com.hoverla.bring.context.bean.dependency.BeanDependency;
 import com.hoverla.bring.context.util.ResolveDependenciesUtil;
@@ -20,6 +21,12 @@ import static com.hoverla.bring.common.StringConstants.*;
 import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
+/**
+ * This class describes the internals of a {@link Bean} created by {@link Configuration}
+ * and provides a basic BeanDefinition implementation.
+ * <p>
+ * @see Configuration
+ */
 @Slf4j
 public class ConfigurationBeanDefinition extends AbstractBeanDefinition {
     private final Object configInstance;

@@ -1,6 +1,7 @@
 package com.hoverla.bring.context.bean.postprocessor;
 
 import com.hoverla.bring.annotation.Autowired;
+import com.hoverla.bring.annotation.Bean;
 import com.hoverla.bring.context.ApplicationContext;
 import com.hoverla.bring.exception.InvokeMethodException;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +13,9 @@ import java.util.Arrays;
 import static com.hoverla.bring.common.StringConstants.INVOKE_METHOD_EXCEPTION;
 
 /**
+ * SetterAutowiringPostProcessor using to inject another bean to current by setter.
+ * @see Bean
+ * <p>
  * Autowired annotation is applied to public methods which starts with 'set'
  */
 @Slf4j

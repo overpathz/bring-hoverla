@@ -23,6 +23,9 @@ import static com.hoverla.bring.common.StringConstants.NO_UNIQUE_BEAN_EXCEPTION;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.joining;
 
+/**
+ * {@link BeanDependencyNameResolver} its util class using to resolve {@link BeanDependency} names.
+ */
 @Slf4j
 public class BeanDependencyNameResolver {
     public void resolveDependencyNames(BeanDefinitionContainer container) {

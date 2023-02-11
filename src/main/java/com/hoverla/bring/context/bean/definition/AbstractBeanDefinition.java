@@ -1,10 +1,14 @@
 package com.hoverla.bring.context.bean.definition;
 
+import com.hoverla.bring.annotation.Bean;
 import com.hoverla.bring.context.bean.dependency.BeanDependency;
 
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * This class describes the internals of a {@link Bean}
+ * and provides a basic BeanDefinition implementation. */
 public abstract class AbstractBeanDefinition implements BeanDefinition {
     protected Object instance;
     protected String name;

@@ -1,6 +1,6 @@
 package com.hoverla.bring.context.bean.postprocessor;
 
-import com.hoverla.bring.context.AnnotationApplicationContextImpl;
+import com.hoverla.bring.context.DefaultApplicationContextImpl;
 import com.hoverla.bring.context.ApplicationContext;
 import com.hoverla.bring.context.bean.definition.BeanDefinitionMapper;
 import com.hoverla.bring.context.bean.dependency.BeanDependencyNameResolver;
@@ -74,7 +74,7 @@ class SetterAutowiringPostProcessorTest {
     }
 
     private ApplicationContext getApplicationContext(String packageToScan) {
-        return new AnnotationApplicationContextImpl(
+        return new DefaultApplicationContextImpl(
             List.of(new BeanAnnotationScanner(new BeanDefinitionMapper(), packageToScan)),
             new BeanInitializer(new BeanDependencyNameResolver()));
     }

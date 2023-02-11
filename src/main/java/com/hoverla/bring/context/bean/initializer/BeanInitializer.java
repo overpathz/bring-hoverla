@@ -18,6 +18,9 @@ import static com.hoverla.bring.common.StringConstants.NO_SUCH_BEAN_EXCEPTION_BY
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toMap;
 
+/**
+ * {@link BeanInitializer} this class using for initialize beans.
+ */
 @Slf4j
 @RequiredArgsConstructor
 public class BeanInitializer {

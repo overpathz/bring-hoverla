@@ -9,18 +9,19 @@ import java.lang.reflect.Field;
 
 import static com.hoverla.bring.common.StringConstants.INITIALIZE_PROPERTY_EXCEPTION;
 
+/**
+ * AutowiringPostProcessor using to inject another bean to current by field.
+ */
 @Slf4j
 public class AutowiringPostProcessor implements PostProcessor {
 
     @Override
-    @SuppressWarnings("java:S3011")
     public void process(Object beanInstance, ApplicationContext applicationContext) {
         for (Field field : beanInstance.getClass().getDeclaredFields()) {
             if (field.isAnnotationPresent(Autowired.class)) {
                 log.debug("Injecting field '{}' to the bean of type {}", field.getName(), beanInstance.getClass());
                 field.setAccessible(true);
                 try {
-                    //TODO add constuctor/setter injection
                     field.set(beanInstance, applicationContext.getBean(field.getType()));
                 } catch (IllegalAccessException e) {
                     String canNotInitializeMessage = INITIALIZE_PROPERTY_EXCEPTION;
