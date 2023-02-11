@@ -13,12 +13,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class BeanAnnotationScanner implements BeanScanner{
+public class BeanAnnotationScanner implements BeanScanner {
     private final BeanDefinitionMapper mapper;
     private final String[] packagesToScan;
 
-    public BeanAnnotationScanner(BeanDefinitionMapper mapper,
-                                 String... packagesToScan) {
+    public BeanAnnotationScanner(BeanDefinitionMapper mapper, String... packagesToScan) {
         this.mapper = mapper;
         this.packagesToScan = packagesToScan;
     }

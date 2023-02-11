@@ -8,9 +8,7 @@ public class BeanDefinitionMapper {
         return new DefaultBeanDefinition(beanClass);
     }
 
-
     public BeanDefinition mapToBeanDefinition(Object configuration, Method beanMethod) {
         return new ConfigurationBeanDefinition(configuration, beanMethod);
     }
-
 }

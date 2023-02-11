@@ -9,8 +9,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Parameter;
 
 @Getter
-@EqualsAndHashCode(of = {"name"})
 @AllArgsConstructor
+@EqualsAndHashCode(of = {"name"})
 public class BeanDependency {
 
     @Setter

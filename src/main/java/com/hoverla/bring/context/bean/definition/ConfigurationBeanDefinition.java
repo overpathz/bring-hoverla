@@ -16,6 +16,7 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import static com.hoverla.bring.common.StringConstants.*;
 import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
@@ -25,9 +26,10 @@ public class ConfigurationBeanDefinition extends AbstractBeanDefinition {
     private final Method beanMethod;
 
     public ConfigurationBeanDefinition(Object configInstance, Method beanMethod) {
-        Objects.requireNonNull(configInstance, "Configuration class instance can't be null");
-        Objects.requireNonNull(beanMethod, "Configuration bean method can't be null");
+        Objects.requireNonNull(configInstance, CONFIGURATION_CLASS_INSTANCE_ERROR_MESSAGE);
+        Objects.requireNonNull(beanMethod, CONFIGURATION_BEAN_METHOD_ERROR_MESSAGE);
         log.debug("Creating the bean definition from method '{}'", beanMethod);
+
         this.configInstance = configInstance;
         this.beanMethod = beanMethod;
 
@@ -74,8 +76,8 @@ public class ConfigurationBeanDefinition extends AbstractBeanDefinition {
 
     private Map<String, BeanDependency> resolveDependencies(Method beanMethod) {
         return Stream.of(beanMethod.getParameters())
-            .map(BeanDependency::fromParameter)
-            .collect(toMap(BeanDependency::getName, Function.identity()));
+                .map(BeanDependency::fromParameter)
+                .collect(toMap(BeanDependency::getName, Function.identity()));
     }
 
     private Object createInstance(List<BeanDefinition> dependencies) {
@@ -87,7 +89,7 @@ public class ConfigurationBeanDefinition extends AbstractBeanDefinition {
             ResolveDependenciesUtil.resolveDependencies(dependencies, params, constructorArguments, name);
             return beanMethod.invoke(configInstance, constructorArguments);
         } catch (Exception e) {
-            throw new BeanInstanceCreationException(String.format("Bean with name '%s' can't be instantiated", name), e);
+            throw new BeanInstanceCreationException(String.format(BEAN_INSTANCE_CREATION_EXCEPTION, name), e);
         }
     }
 }

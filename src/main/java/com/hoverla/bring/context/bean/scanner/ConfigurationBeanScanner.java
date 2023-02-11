@@ -22,8 +22,7 @@ public class ConfigurationBeanScanner implements BeanScanner {
     private final String[] packagesToScan;
     private final BeanDefinitionMapper mapper;
 
-    public ConfigurationBeanScanner(BeanDefinitionMapper mapper,
-                                         String... packagesToScan) {
+    public ConfigurationBeanScanner(BeanDefinitionMapper mapper, String... packagesToScan) {
         this.packagesToScan = packagesToScan;
         this.mapper = mapper;
     }
@@ -51,16 +50,16 @@ public class ConfigurationBeanScanner implements BeanScanner {
 
     private List<BeanDefinition> scanBeanConfigMethods(Class<?> configurationClass) {
         //TODO add validation for @Configuration class
-        Object configuration = createConfigurationInstance(configurationClass);
+        Object configurationInstance = createConfigurationInstance(configurationClass);
 
         return resolveBeanMethods(configurationClass).stream()
-            .map(method -> mapper.mapToBeanDefinition(configuration, method))
+            .map(method -> mapper.mapToBeanDefinition(configurationInstance, method))
             .collect(toList());
     }
 
     private List<Method> resolveBeanMethods(Class<?> configClass) {
         return Stream.of(configClass.getMethods())
-            .filter(m -> m.isAnnotationPresent(Bean.class))
+            .filter(method -> method.isAnnotationPresent(Bean.class))
             .collect(toList());
     }
 

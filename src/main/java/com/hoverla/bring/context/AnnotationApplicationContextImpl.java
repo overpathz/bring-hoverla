@@ -20,10 +20,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Supplier;
 
-import static com.hoverla.bring.exception.DefaultConstructorNotFoundException.DEFAULT_CONSTRUCTOR_NOT_FOUND_EXCEPTION;
-import static com.hoverla.bring.exception.NoSuchBeanException.NO_SUCH_BEAN_EXCEPTION_BY_TYPE;
-import static com.hoverla.bring.exception.NoUniqueBeanException.NO_UNIQUE_BEAN_EXCEPTION;
-import static com.hoverla.bring.exception.NoUniqueBeanException.NO_UNIQUE_PRIMARY_BEAN_EXCEPTION;
+import static com.hoverla.bring.common.StringConstants.BASE_BRING_PACKAGE;
+import static com.hoverla.bring.common.StringConstants.DEFAULT_CONSTRUCTOR_NOT_FOUND_EXCEPTION;
+import static com.hoverla.bring.common.StringConstants.NO_SUCH_BEAN_EXCEPTION_BY_NAME_TYPE;
+import static com.hoverla.bring.common.StringConstants.NO_SUCH_BEAN_EXCEPTION_BY_TYPE;
+import static com.hoverla.bring.common.StringConstants.NO_UNIQUE_BEAN_EXCEPTION;
+import static com.hoverla.bring.common.StringConstants.NO_UNIQUE_PRIMARY_BEAN_EXCEPTION;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
@@ -33,8 +35,6 @@ import static java.util.stream.Collectors.toMap;
 public class AnnotationApplicationContextImpl implements ApplicationContext {
     private final List<PostProcessor> postProcessors = new ArrayList<>();
     private final BeanDefinitionContainer container;
-
-    private static final String BASE_BRING_PACKAGE = "com.hoverla.bring";
 
     public AnnotationApplicationContextImpl(List<BeanScanner> scanners, BeanInitializer initializer) {
         List<BeanDefinition> beanDefinitions = scanPackagesForBeanDefinitions(scanners);
@@ -75,7 +75,7 @@ public class AnnotationApplicationContextImpl implements ApplicationContext {
             .map(BeanDefinition::getInstance)
             .map(beanType::cast)
             .orElseThrow(() -> new NoSuchBeanException(
-                format("Bean with name %s and type %s not found", name, beanType.getSimpleName())
+                format(NO_SUCH_BEAN_EXCEPTION_BY_NAME_TYPE, name, beanType.getSimpleName())
             ));
     }
 
@@ -86,7 +86,6 @@ public class AnnotationApplicationContextImpl implements ApplicationContext {
             .collect(toMap(BeanDefinition::name, beanDefinition -> beanType.cast(beanDefinition.getInstance())));
     }
 
-    @SuppressWarnings("java:S3011")
     private void postProcess() {
         initPostProcessors();
         Collection<Object> beanInstances = container.getBeanDefinitions().stream()
@@ -103,7 +102,8 @@ public class AnnotationApplicationContextImpl implements ApplicationContext {
                 postProcessors.add(postProcessor.getDeclaredConstructor().newInstance());
             } catch (NoSuchMethodException | InstantiationException | IllegalAccessException |
                      InvocationTargetException e) {
-                throw new DefaultConstructorNotFoundException(format(DEFAULT_CONSTRUCTOR_NOT_FOUND_EXCEPTION, postProcessor.getSimpleName()));
+                throw new DefaultConstructorNotFoundException(
+                        format(DEFAULT_CONSTRUCTOR_NOT_FOUND_EXCEPTION, postProcessor.getSimpleName()));
             }
         }
     }

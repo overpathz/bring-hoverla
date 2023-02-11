@@ -15,6 +15,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +23,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.hoverla.bring.common.StringConstants.*;
 import static java.util.Collections.emptyMap;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
@@ -34,7 +36,8 @@ public class DefaultBeanDefinition extends AbstractBeanDefinition {
     private List<Field> autowiredFields;
 
     public DefaultBeanDefinition(Class<?> beanClass) {
-        Objects.requireNonNull(beanClass, "Bean class cannot be null");
+        Objects.requireNonNull(beanClass, BEAN_CLASS_ERROR_MESSAGE);
+
         this.type = beanClass;
         log.trace("'{}' bean type is '{}'", name, type);
 
@@ -73,21 +76,21 @@ public class DefaultBeanDefinition extends AbstractBeanDefinition {
     }
 
     private Map<String, BeanDependency> resolveDependencies(Class<?> beanClass) {
-        Map<String, BeanDependency> allDependencies = new HashMap<>();
-        allDependencies.putAll(resolveConstructorDependencies(beanClass));
-        allDependencies.putAll(resolveFieldDependencies(beanClass));
+        Map<String, BeanDependency> allBeanDependencies = new HashMap<>();
+        allBeanDependencies.putAll(resolveConstructorDependencies(beanClass));
+        allBeanDependencies.putAll(resolveFieldDependencies(beanClass));
 
-        return allDependencies;
+        return allBeanDependencies;
     }
 
     private Map<String, BeanDependency> resolveConstructorDependencies(Class<?> beanClass) {
         Constructor<?>[] beanConstructors = beanClass.getConstructors();
 
         return Stream.of(beanConstructors)
-            .filter(injectedConstructor -> injectedConstructor.isAnnotationPresent(Autowired.class))
-            .findFirst()
-            .map(this::resolveConstructorDependencies)
-            .orElseGet(() -> resolveConstructorDependencies(beanConstructors[0]));
+                .filter(injectedConstructor -> injectedConstructor.isAnnotationPresent(Autowired.class))
+                .findFirst()
+                .map(this::resolveConstructorDependencies)
+                .orElseGet(() -> resolveConstructorDependencies(beanConstructors[0]));
     }
 
     private Map<String, BeanDependency> resolveConstructorDependencies(Constructor<?> beanConstructor) {
@@ -97,13 +100,14 @@ public class DefaultBeanDefinition extends AbstractBeanDefinition {
         if (isEmpty(constructorParams)) {
             return emptyMap();
         }
+        
         List<String> paramNames = Stream.of(constructorParams).map(Parameter::getName).collect(Collectors.toList());
         log.debug("Constructor of class {} has the following parameters: {}",
             constructor.getDeclaringClass().getSimpleName(), paramNames);
 
         return Stream.of(constructorParams)
-            .map(BeanDependency::fromParameter)
-            .collect(toMap(BeanDependency::getName, identity()));
+                .map(BeanDependency::fromParameter)
+                .collect(toMap(BeanDependency::getName, identity()));
     }
 
     private Map<String, BeanDependency> resolveFieldDependencies(Class<?> beanClass) {
@@ -114,15 +118,16 @@ public class DefaultBeanDefinition extends AbstractBeanDefinition {
         }
         List<String> autowiredFieldNames = autowiredFields.stream().map(Field::getName).collect(Collectors.toList());
         log.debug("Class {} has the following autowired fields: {}", beanClass.getSimpleName(), autowiredFieldNames);
+        
         return autowiredFields.stream()
-            .map(BeanDependency::fromField)
-            .collect(toMap(BeanDependency::getName, identity()));
+                .map(BeanDependency::fromField)
+                .collect(toMap(BeanDependency::getName, identity()));
     }
 
     private <T extends AnnotatedElement> List<T> getAutowiredElements(List<T> elements) {
         return elements.stream()
-            .filter(e -> e.isAnnotationPresent(Autowired.class))
-            .collect(Collectors.toList());
+                .filter(e -> e.isAnnotationPresent(Autowired.class))
+                .collect(Collectors.toList());
     }
 
     private Object createInstance(List<BeanDefinition> dependencies) {
@@ -135,32 +140,45 @@ public class DefaultBeanDefinition extends AbstractBeanDefinition {
             this.instance = beanInstance;
             return instance;
         } catch (Exception e) {
-            throw new BeanInstanceCreationException(String.format("Bean with name '%s' can't be instantiated", name), e);
+            throw new BeanInstanceCreationException(String.format(BEAN_INSTANCE_CREATION_EXCEPTION, name), e);
         }
     }
 
     @SneakyThrows
     private Object createInstanceUsingConstructor(List<BeanDefinition> dependencies) {
         if (constructor.getParameterCount() == 0) {
-            return constructor.newInstance();
+            try {
+                return constructor.newInstance();
+            } catch (Exception e) {
+                throw new RuntimeException(String.format(CAN_NOT_CREATE_INSTANCE, constructor.getName()), e);
+            }
         }
         List<Parameter> parameters = new ArrayList<>(List.of(constructor.getParameters()));
         Object[] constructorArgs = new Object[parameters.size()];
 
         ResolveDependenciesUtil.resolveDependencies(dependencies, parameters, constructorArgs, name);
-        return constructor.newInstance(constructorArgs);
+        try {
+            return constructor.newInstance(constructorArgs);
+        } catch (Exception e) {
+            throw new RuntimeException(
+                    String.format(
+                            CAN_NOT_CREATE_INSTANCE_WITH_ARGUMENTS,
+                            constructor.getName(),
+                            Arrays.toString(constructorArgs)), e);
+        }
     }
 
     private void doFieldAutowiring(Object beanInstance, List<BeanDefinition> dependencies) {
         autowiredFields
-            .stream()
-            .sorted(this::subclassesFirst)
-            .forEach(field -> autowireField(beanInstance, field, dependencies));
+                .stream()
+                .sorted(this::subclassesFirst)
+                .forEach(field -> autowireField(beanInstance, field, dependencies));
 
         verifyFieldAutowiring(beanInstance);
     }
 
-    private int subclassesFirst(Field field, Field anotherField) {
+    private int subclassesFirst(Field field,
+                                Field anotherField) {
         Class<?> fieldType = field.getType();
         Class<?> anotherFieldType = anotherField.getType();
         if (fieldType.isAssignableFrom(anotherFieldType)) {
@@ -171,15 +189,14 @@ public class DefaultBeanDefinition extends AbstractBeanDefinition {
 
     private void autowireField(Object beanInstance, Field targetField, List<BeanDefinition> dependencies) {
         dependencies.stream()
-            .filter(dependency -> fieldMatch(targetField, dependency))
-            .findAny()
-            .ifPresent(dependency -> {
-                setFieldValue(targetField, beanInstance, dependency);
-                dependencies.remove(dependency);
-            });
+                .filter(dependency -> fieldMatch(targetField, dependency))
+                .findAny()
+                .ifPresent(dependency -> {
+                    setFieldValue(targetField, beanInstance, dependency);
+                    dependencies.remove(dependency);
+                });
     }
 
-    @SuppressWarnings("java:S2589")
     private boolean fieldMatch(Field field, BeanDefinition dependencyToMatch) {
         Class<?> fieldType = field.getType();
         return fieldType.isAssignableFrom(dependencyToMatch.type());
@@ -187,29 +204,33 @@ public class DefaultBeanDefinition extends AbstractBeanDefinition {
 
     private void verifyFieldAutowiring(Object beanInstance) {
         List<String> unresolvedFieldNames = autowiredFields.stream()
-            .filter(field -> injectionFailedForField(field, beanInstance))
-            .map(Field::getName)
-            .collect(Collectors.toList());
+                .filter(field -> injectionFailedForField(field, beanInstance))
+                .map(Field::getName)
+                .collect(Collectors.toList());
         if (!unresolvedFieldNames.isEmpty()) {
             log.warn("Could not autowire the following fields: {}", unresolvedFieldNames.size());
             throw new BeanDependencyInjectionException(String.format(
-                "Field injection failed for bean instance of type %s. Unresolved fields: %s",
-                beanInstance.getClass().getName(), unresolvedFieldNames)
+                    BEAN_DEPENDENCY_INJECTION_EXCEPTION,
+                    beanInstance.getClass().getName(), unresolvedFieldNames)
             );
         }
     }
 
-    @SneakyThrows
-    @SuppressWarnings("java:S3011")
     private void setFieldValue(Field field, Object beanInstance, BeanDefinition dependency) {
         field.setAccessible(true);
-        field.set(beanInstance, dependency.getInstance());
+        try {
+            field.set(beanInstance, dependency.getInstance());
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(String.format(CAN_NOT_SET_FIELD, field, beanInstance), e);
+        }
     }
 
-    @SneakyThrows
-    @SuppressWarnings("java:S3011")
     private boolean injectionFailedForField(Field targetField, Object beanInstance) {
         targetField.setAccessible(true);
-        return targetField.get(beanInstance) == null;
+        try {
+            return targetField.get(beanInstance) == null;
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(String.format(CAN_NOT_GET_FIELD, targetField, beanInstance), e);
+        }
     }
 }

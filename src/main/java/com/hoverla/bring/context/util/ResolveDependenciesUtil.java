@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.hoverla.bring.common.StringConstants.BEAN_HAS_NO_MATCHES_DEPENDENCY_EXCEPTION;
 import static java.lang.String.format;
 
 public class ResolveDependenciesUtil {
@@ -52,13 +53,12 @@ public class ResolveDependenciesUtil {
             .filter(bd -> parameterMatch(parameter, bd))
             .findFirst()
             .orElseThrow(() -> new BeanDependencyInjectionException(format(
-                "'%s' bean has no dependency that matches parameter '%s'", name, parameter.getType().getName())));
+                    BEAN_HAS_NO_MATCHES_DEPENDENCY_EXCEPTION, name, parameter.getType().getName())));
 
         dependencies.remove(beanDefinition);
         return beanDefinition;
     }
 
-    @SuppressWarnings("java:S2589")
     private static boolean parameterMatch(Parameter parameter, BeanDefinition dependencyToMatch) {
         Class<?> parameterType = parameter.getType();
         return parameterType.isAssignableFrom(dependencyToMatch.type());

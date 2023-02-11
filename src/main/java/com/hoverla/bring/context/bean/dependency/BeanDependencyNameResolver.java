@@ -17,8 +17,9 @@ import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import static com.hoverla.bring.exception.MissingDependencyException.MISSING_DEPENDENCY_EXCEPTION;
-import static com.hoverla.bring.exception.NoUniqueBeanException.NO_UNIQUE_BEAN_EXCEPTION;
+import static com.hoverla.bring.common.StringConstants.BEAN_INSTANCE_CREATION_SAME_CANDIDATE_EXCEPTION;
+import static com.hoverla.bring.common.StringConstants.MISSING_DEPENDENCY_EXCEPTION;
+import static com.hoverla.bring.common.StringConstants.NO_UNIQUE_BEAN_EXCEPTION;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.joining;
 
@@ -47,8 +48,7 @@ public class BeanDependencyNameResolver {
 
             oldToNewNames.forEach(namePair -> replaceOldName(namePair, beanDependencies));
             if (oldDependencies.size() != beanDependencies.size()) {
-                throw new BeanInstanceCreationException(format("Bean named `%s` has a supertype and one of its subtypes" +
-                    " in dependencies and they have the same candidate for injection", beanDefinition.name()));
+                throw new BeanInstanceCreationException(format(BEAN_INSTANCE_CREATION_SAME_CANDIDATE_EXCEPTION, beanDefinition.name()));
             }
         }
     }

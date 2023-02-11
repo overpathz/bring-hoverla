@@ -5,7 +5,7 @@ import com.hoverla.bring.context.bean.dependency.BeanDependency;
 import java.util.Map;
 import java.util.Objects;
 
-public abstract class AbstractBeanDefinition implements BeanDefinition{
+public abstract class AbstractBeanDefinition implements BeanDefinition {
     protected Object instance;
     protected String name;
     protected Class<?> type;

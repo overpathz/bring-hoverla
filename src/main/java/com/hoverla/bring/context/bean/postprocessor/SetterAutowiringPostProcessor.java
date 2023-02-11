@@ -9,6 +9,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 
+import static com.hoverla.bring.common.StringConstants.INVOKE_METHOD_EXCEPTION;
+
 /**
  * Autowired annotation is applied to public methods which starts with 'set'
  */
@@ -31,7 +33,7 @@ public class SetterAutowiringPostProcessor implements PostProcessor {
                     }
                     method.invoke(beanInstance, arguments);
                 } catch (InvocationTargetException | IllegalAccessException e) {
-                    throw new InvokeMethodException(String.format("Can't invoke '%s' method", method.getName()));
+                    throw new InvokeMethodException(String.format(INVOKE_METHOD_EXCEPTION, method.getName()));
                 }
             }
         }

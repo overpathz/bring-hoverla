@@ -14,8 +14,8 @@ public class BeanDefinitionContainer {
 
     public BeanDefinitionContainer(List<BeanDefinition> beanDefinitions) {
         this.beanDefinitions = beanDefinitions
-            .stream()
-            .collect(toConcurrentMap(BeanDefinition::name, Function.identity()));
+                .stream()
+                .collect(toConcurrentMap(BeanDefinition::name, Function.identity()));
     }
 
     public Optional<BeanDefinition> getBeanDefinitionByName(String name) {
@@ -24,20 +24,19 @@ public class BeanDefinitionContainer {
 
     public List<BeanDefinition> getBeansAssignableFromType(Class<?> type) {
         return beanDefinitions.values()
-            .stream()
-            .filter(bd -> type.isAssignableFrom(bd.type()))
-            .collect(toList());
+                .stream()
+                .filter(beanDefinition -> type.isAssignableFrom(beanDefinition.type()))
+                .collect(toList());
     }
 
     public List<BeanDefinition> getBeansWithExactType(Class<?> type) {
         return beanDefinitions.values()
-            .stream()
-            .filter(bd -> type.equals(bd.type()))
-            .collect(toList());
+                .stream()
+                .filter(beanDefinition -> type.equals(beanDefinition.type()))
+                .collect(toList());
     }
 
     public Collection<BeanDefinition> getBeanDefinitions() {
         return beanDefinitions.values();
     }
-
 }
