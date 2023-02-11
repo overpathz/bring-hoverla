@@ -8,17 +8,15 @@ import com.hoverla.bring.context.bean.dependency.BeanDependency;
 import com.hoverla.bring.context.util.ResolveDependenciesUtil;
 import com.hoverla.bring.exception.BeanDependencyInjectionException;
 import com.hoverla.bring.exception.BeanInstanceCreationException;
+import com.hoverla.bring.exception.ConstructorInstantiationFailedException;
+import com.hoverla.bring.exception.FieldAccessException;
+import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Parameter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -30,7 +28,7 @@ import static org.apache.commons.lang3.ArrayUtils.isEmpty;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 /**
- * This class describes the internals of a {@link Bean} created by default approach
+ * This class describes the internals of a {@link Bean } created by default approach
  * and provides a basic BeanDefinition implementation.
  * <p>
  * @see Configuration
@@ -149,21 +147,13 @@ public class DefaultBeanDefinition extends AbstractBeanDefinition {
         }
     }
 
-    private Object doCreateInstance(List<BeanDefinition> dependencies) {
-        Object beanInstance = createInstanceUsingConstructor(dependencies);
-
-        if (!dependencies.isEmpty()) {
-            doFieldAutowiring(beanInstance, dependencies);
-        }
-        return beanInstance;
-    }
-
     private Object createInstanceUsingConstructor(List<BeanDefinition> dependencies) {
         if (constructor.getParameterCount() == 0) {
             try {
                 return constructor.newInstance();
             } catch (Exception e) {
-                throw new RuntimeException(String.format(CAN_NOT_CREATE_INSTANCE, constructor.getName()), e);
+                throw new ConstructorInstantiationFailedException(String.format(CAN_NOT_CREATE_INSTANCE,
+                    constructor.getName()), e);
             }
         }
         List<Parameter> parameters = new ArrayList<>(List.of(constructor.getParameters()));
@@ -173,7 +163,7 @@ public class DefaultBeanDefinition extends AbstractBeanDefinition {
         try {
             return constructor.newInstance(constructorArgs);
         } catch (Exception e) {
-            throw new RuntimeException(
+            throw new ConstructorInstantiationFailedException(
                     String.format(
                             CAN_NOT_CREATE_INSTANCE_WITH_ARGUMENTS,
                             constructor.getName(),
@@ -229,21 +219,23 @@ public class DefaultBeanDefinition extends AbstractBeanDefinition {
         }
     }
 
+    @SuppressWarnings("java:S3011")
     private void setFieldValue(Field field, Object beanInstance, BeanDefinition dependency) {
         field.setAccessible(true);
         try {
             field.set(beanInstance, dependency.getInstance());
         } catch (IllegalAccessException e) {
-            throw new RuntimeException(String.format(CAN_NOT_SET_FIELD, field, beanInstance), e);
+            throw new FieldAccessException(String.format(CAN_NOT_SET_FIELD, field, beanInstance), e);
         }
     }
 
+    @SuppressWarnings("java:S3011")
     private boolean injectionFailedForField(Field targetField, Object beanInstance) {
         targetField.setAccessible(true);
         try {
             return targetField.get(beanInstance) == null;
         } catch (IllegalAccessException e) {
-            throw new RuntimeException(String.format(CAN_NOT_GET_FIELD, targetField, beanInstance), e);
+            throw new FieldAccessException(String.format(CAN_NOT_GET_FIELD, targetField, beanInstance), e);
         }
     }
 }

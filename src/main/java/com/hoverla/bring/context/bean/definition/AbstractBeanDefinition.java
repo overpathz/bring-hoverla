@@ -8,7 +8,8 @@ import java.util.Objects;
 
 /**
  * This class describes the internals of a {@link Bean}
- * and provides a basic BeanDefinition implementation. */
+ * and provides a basic BeanDefinition implementation.
+ */
 public abstract class AbstractBeanDefinition implements BeanDefinition {
     protected Object instance;
     protected String name;

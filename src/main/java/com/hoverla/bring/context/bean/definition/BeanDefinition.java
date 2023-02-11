@@ -34,7 +34,7 @@ public interface BeanDefinition {
     boolean isInstantiated();
 
     /**
-     * Initialized beans by bean definitiona
+     * Initialized beans by bean definitions
      */
     void instantiate(BeanDefinition... dependencies);
 

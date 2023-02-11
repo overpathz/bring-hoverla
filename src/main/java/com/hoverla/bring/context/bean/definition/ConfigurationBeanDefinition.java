@@ -17,7 +17,9 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import static com.hoverla.bring.common.StringConstants.*;
+import static com.hoverla.bring.common.StringConstants.BEAN_INSTANCE_CREATION_EXCEPTION;
+import static com.hoverla.bring.common.StringConstants.CONFIGURATION_BEAN_METHOD_ERROR_MESSAGE;
+import static com.hoverla.bring.common.StringConstants.CONFIGURATION_CLASS_INSTANCE_ERROR_MESSAGE;
 import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 

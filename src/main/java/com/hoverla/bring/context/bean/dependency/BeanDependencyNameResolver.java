@@ -1,5 +1,7 @@
 package com.hoverla.bring.context.bean.dependency;
 
+import com.hoverla.bring.annotation.Bean;
+import com.hoverla.bring.annotation.Primary;
 import com.hoverla.bring.context.bean.definition.BeanDefinition;
 import com.hoverla.bring.context.bean.definition.BeanDefinitionContainer;
 import com.hoverla.bring.exception.BeanInstanceCreationException;
@@ -64,6 +66,18 @@ public class BeanDependencyNameResolver {
         beanDependencies.put(newName, oldDependency);
     }
 
+    /**
+     * In this method we are resolving the rootDefinition dependency name. By default, it's the class name,
+     * but using the {@link Bean} annotation, we can set another name for the bean definition.
+     * If that's the case, we should go through the matching beans from container.
+     * If there is more than one matching bean, we should select the {@link Primary} bean.
+     * If there are zero matching beans, we should throw an exception
+     *
+     * @param targetDependency the dependency we're trying to inject into rootDefinition
+     * @param rootDefinition the bean definition in which we try to inject the targetDependency
+     * @param container the bean definition container
+     * @return pair of ola and new name of rootDefinition dependency
+     */
     @Nullable
     private Pair<String, String> resolveDependencyName(BeanDependency targetDependency,
                                                        BeanDefinition rootDefinition,
@@ -78,15 +92,11 @@ public class BeanDependencyNameResolver {
         log.debug("Resolving dependency: {}. Trying to find the matching bean definition by type: {} ",
             dependencyName, dependencyType.getName());
 
-
         List<BeanDefinition> sameTypeBeans = container.getBeansWithExactType(dependencyType);
 
         List<BeanDefinition> sameTypeBeansCopy = new ArrayList<>(sameTypeBeans);
-        sameTypeBeansCopy.remove(rootDefinition);
-
         Optional<BeanDefinition> optionalDependency;
         optionalDependency = findMatchingDependencyFirstTry(sameTypeBeansCopy);
-
         BeanDefinition matchingDependency;
         if (optionalDependency.isEmpty()) {
             List<BeanDefinition> assignableBeans = container.getBeansAssignableFromType(dependencyType);
