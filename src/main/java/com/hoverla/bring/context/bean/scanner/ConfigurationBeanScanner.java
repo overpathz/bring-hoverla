@@ -5,9 +5,11 @@ import com.hoverla.bring.annotation.Configuration;
 import com.hoverla.bring.context.bean.definition.BeanDefinitionMapper;
 import com.hoverla.bring.context.bean.definition.BeanDefinition;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.reflections.Reflections;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -15,6 +17,7 @@ import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 
+@Slf4j
 public class ConfigurationBeanScanner implements BeanScanner {
     private final String[] packagesToScan;
     private final BeanDefinitionMapper mapper;
@@ -27,12 +30,18 @@ public class ConfigurationBeanScanner implements BeanScanner {
 
     @Override
     public List<BeanDefinition> scan() {
+        log.info("Starting the scan process of classes annotated with '@Configuration' within the '{}' packages",
+            Arrays.toString(this.packagesToScan));
+
         Reflections reflections = new Reflections((Object[]) packagesToScan);
         Set<Class<?>> configurationClasses = reflections.getTypesAnnotatedWith(Configuration.class);
 
         if (configurationClasses.isEmpty()) {
+            log.warn("No classes annotated with '@Configuration' found during the scan in packages {}",
+                Arrays.toString(this.packagesToScan));
             return Collections.emptyList();
         }
+        log.debug("{} classes annotated with '@Configuration' have been found", configurationClasses.size());
 
         return configurationClasses.stream()
             .map(this::scanBeanConfigMethods)

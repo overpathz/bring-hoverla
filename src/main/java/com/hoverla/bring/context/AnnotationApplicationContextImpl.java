@@ -9,6 +9,7 @@ import com.hoverla.bring.context.bean.postprocessor.PostProcessor;
 import com.hoverla.bring.exception.DefaultConstructorNotFoundException;
 import com.hoverla.bring.exception.NoSuchBeanException;
 import com.hoverla.bring.exception.NoUniqueBeanException;
+import lombok.extern.slf4j.Slf4j;
 import org.reflections.Reflections;
 
 import java.lang.reflect.InvocationTargetException;
@@ -28,6 +29,7 @@ import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
+@Slf4j
 public class AnnotationApplicationContextImpl implements ApplicationContext {
     private final List<PostProcessor> postProcessors = new ArrayList<>();
     private final BeanDefinitionContainer container;
@@ -40,6 +42,7 @@ public class AnnotationApplicationContextImpl implements ApplicationContext {
         container = new BeanDefinitionContainer(beanDefinitions);
         initializer.initialize(container);
         postProcess();
+        log.info("Application context initialization has been finished");
     }
 
     private List<BeanDefinition> scanPackagesForBeanDefinitions(List<BeanScanner> scanners) {

@@ -2,7 +2,12 @@ package com.hoverla.bring.context.bean.scanner;
 
 import com.hoverla.bring.context.bean.definition.BeanDefinition;
 import com.hoverla.bring.context.bean.definition.BeanDefinitionMapper;
-import com.hoverla.bring.context.fixtures.bean.success.*;
+import com.hoverla.bring.context.fixtures.bean.success.A;
+import com.hoverla.bring.context.fixtures.bean.success.B;
+import com.hoverla.bring.context.fixtures.bean.success.ChildServiceBeanOne;
+import com.hoverla.bring.context.fixtures.bean.success.ChildServiceBeanTwo;
+import com.hoverla.bring.context.fixtures.bean.success.TestBeanWithName;
+import com.hoverla.bring.context.fixtures.bean.success.TestBeanWithoutName;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
