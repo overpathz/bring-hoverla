@@ -9,7 +9,7 @@ import com.hoverla.bring.context.util.ResolveDependenciesUtil;
 import com.hoverla.bring.exception.BeanDependencyInjectionException;
 import com.hoverla.bring.exception.BeanInstanceCreationException;
 import com.hoverla.bring.exception.ConstructorInstantiationFailedException;
-import com.hoverla.bring.exception.FieldAccessException;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.AnnotatedElement;
@@ -219,23 +219,17 @@ public class DefaultBeanDefinition extends AbstractBeanDefinition {
         }
     }
 
+    @SneakyThrows
     @SuppressWarnings("java:S3011")
     private void setFieldValue(Field field, Object beanInstance, BeanDefinition dependency) {
         field.setAccessible(true);
-        try {
-            field.set(beanInstance, dependency.getInstance());
-        } catch (IllegalAccessException e) {
-            throw new FieldAccessException(String.format(CAN_NOT_SET_FIELD, field, beanInstance), e);
-        }
+        field.set(beanInstance, dependency.getInstance());
     }
 
+    @SneakyThrows
     @SuppressWarnings("java:S3011")
     private boolean injectionFailedForField(Field targetField, Object beanInstance) {
         targetField.setAccessible(true);
-        try {
-            return targetField.get(beanInstance) == null;
-        } catch (IllegalAccessException e) {
-            throw new FieldAccessException(String.format(CAN_NOT_GET_FIELD, targetField, beanInstance), e);
-        }
+        return targetField.get(beanInstance) == null;
     }
 }
