@@ -23,11 +23,11 @@ import static java.util.stream.Collectors.toMap;
  * @see Bean
  */
 @Slf4j
-public class ValueAnnotationProcessor implements PostProcessor {
+public class ValueAnnotationProcessorBean implements BeanPostProcessor {
 
     private Map<String, String> propertiesMap = new HashMap<>();
 
-    public ValueAnnotationProcessor() {
+    public ValueAnnotationProcessorBean() {
         initPropertiesMap();
     }
 

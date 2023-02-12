@@ -7,7 +7,7 @@ import com.hoverla.bring.context.ApplicationContext;
  * PostProcessor using for additional configuration {@link Bean}
  * @see Bean
  */
-public interface PostProcessor {
+public interface BeanPostProcessor {
     /**
      * Process additional configuration for bean.
      */
