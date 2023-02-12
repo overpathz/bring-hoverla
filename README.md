@@ -11,7 +11,7 @@ It uses IoC (Inversion of Control) container, which is represented by Applicatio
 
 To install Bring locally you should:
 
-* clone repo ```https://github.com/hoverla-bobocode/Bring.git```
+* clone repo ```https://github.com/overpathz/bring-hoverla```
 * go to the root of Bring project ```cd <path_to_bring>/Bring```
 * build jar with ```mvn clean install -DskipTests```
 * add jar to your maven project
