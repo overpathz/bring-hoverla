@@ -23,12 +23,34 @@ To install Bring locally you should:
     <version>1.0-SNAPSHOT</version> 
 </dependency>
 ```
-ApplicationContext its main API for working with beans at runtime.
-Example:
+To easily start an application with Bring, use the BringApplication.loadContext("package.to.scan") method
 
 ```java
-ApplicationContext context = BringApplication.loadContext("com.hoverla.bring");
-String bean = context.getBean("bean_name", String.class);
+import com.bobocode.hoverla.bring.BringApplication;
+import com.bobocode.hoverla.bring.context.ApplicationContext;
+
+public class DemoApp {
+    public static void main(String[] args) {
+        ApplicationContext applicationContext = BringApplication.loadContext("packages.to.scan"); // provide packages to be scanned for beans 
+    }
+}
+```
+
+If you need to customize loading of ApplicationContext, you can do it with ApplicationContextBuilder. Here's an example of its usage:
+
+```java
+import ch.qos.logback.classic.Level;
+import com.bobocode.hoverla.bring.BringApplication;
+import com.bobocode.hoverla.bring.context.ApplicationContext;
+
+public class DemoApp {
+    public static void main(String[] args) {
+        ApplicationContext applicationContext = BringApplication.getContextBuilder()
+                .logLevel(Level.DEBUG)                  // provide logging level
+                .packagesToScan("packages.to.scan")     // provide packages to be scanned for beans
+                .build();
+    }
+}
 ```
 
 ---
