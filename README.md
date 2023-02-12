@@ -23,14 +23,12 @@ To install Bring locally you should:
     <version>1.0-SNAPSHOT</version> 
 </dependency>
 ```
-
-```java
 ApplicationContext its main API for working with beans at runtime.
 Example:
 
-private ApplicationContext getApplicationContext(String packageToScan) {
-	return new AnnotationApplicationContextImpl(List.of(new BeanAnnotationScanner(new BeanDefinitionMapper(), packageToScan)), new BeanInitializer(new BeanDependencyNameResolver()));
-}
+```java
+ApplicationContext context = BringApplication.loadContext("com.hoverla.bring");
+String bean = context.getBean("bean_name", String.class);
 ```
 
 ---
