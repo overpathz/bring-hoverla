@@ -5,8 +5,8 @@ import com.hoverla.bring.annotation.Primary;
 import com.hoverla.bring.context.bean.definition.BeanDefinition;
 import com.hoverla.bring.context.bean.definition.BeanDefinitionContainer;
 import com.hoverla.bring.context.bean.initializer.BeanInitializer;
+import com.hoverla.bring.context.bean.postprocessor.BeanPostProcessor;
 import com.hoverla.bring.context.bean.scanner.BeanScanner;
-import com.hoverla.bring.context.bean.postprocessor.PostProcessor;
 import com.hoverla.bring.exception.DefaultConstructorNotFoundException;
 import com.hoverla.bring.exception.NoSuchBeanException;
 import com.hoverla.bring.exception.NoUniqueBeanException;
@@ -39,7 +39,7 @@ import static java.util.stream.Collectors.toMap;
  */
 @Slf4j
 public class DefaultApplicationContextImpl implements ApplicationContext {
-    private final List<PostProcessor> postProcessors = new ArrayList<>();
+    private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>();
     private final BeanDefinitionContainer container;
 
     public DefaultApplicationContextImpl(List<BeanScanner> scanners, BeanInitializer initializer) {
@@ -109,7 +109,7 @@ public class DefaultApplicationContextImpl implements ApplicationContext {
     /**
      * This method configures additional settings for beans and applies those settings to them.
      *
-     * @see PostProcessor
+     * @see BeanPostProcessor
      * @see Bean
      */
     private void postProcess() {
@@ -117,21 +117,21 @@ public class DefaultApplicationContextImpl implements ApplicationContext {
         Collection<Object> beanInstances = container.getBeanDefinitions().stream()
                 .map(BeanDefinition::getInstance).collect(toList());
         for (Object beanInstance : beanInstances) {
-            postProcessors.forEach(postProcessor -> postProcessor.process(beanInstance, this));
+            beanPostProcessors.forEach(beanPostProcessor -> beanPostProcessor.process(beanInstance, this));
         }
     }
 
     /**
      * Method for registering additional configuration for beans.
      *
-     * @see PostProcessor
+     * @see BeanPostProcessor
      * @see Bean
      */
     private void initPostProcessors() {
-        var processorClasses = new Reflections(BASE_BRING_PACKAGE).getSubTypesOf(PostProcessor.class);
-        for (Class<? extends PostProcessor> postProcessor : processorClasses) {
+        var processorClasses = new Reflections(BASE_BRING_PACKAGE).getSubTypesOf(BeanPostProcessor.class);
+        for (Class<? extends BeanPostProcessor> postProcessor : processorClasses) {
             try {
-                postProcessors.add(postProcessor.getDeclaredConstructor().newInstance());
+                beanPostProcessors.add(postProcessor.getDeclaredConstructor().newInstance());
             } catch (NoSuchMethodException | InstantiationException | IllegalAccessException |
                      InvocationTargetException e) {
                 throw new DefaultConstructorNotFoundException(

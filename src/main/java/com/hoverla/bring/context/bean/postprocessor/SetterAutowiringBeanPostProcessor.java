@@ -19,7 +19,7 @@ import static com.hoverla.bring.common.StringConstants.INVOKE_METHOD_EXCEPTION;
  * Autowired annotation is applied to public methods which starts with 'set'
  */
 @Slf4j
-public class SetterAutowiringPostProcessor implements PostProcessor {
+public class SetterAutowiringBeanPostProcessor implements BeanPostProcessor {
 
     @Override
     public void process(Object beanInstance, ApplicationContext applicationContext) {
