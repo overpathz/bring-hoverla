@@ -1,17 +1,14 @@
 # Bring
 
----
-
 ## What is Bring?
 
----
-**Bring is a dependency injection framework**. It uses IoC (Inversion of Control) container, which is represented by
-[ApplicationContext](src/main/java/com/bobocode/hoverla/bring/context/ApplicationContext.java),
-where [beans](#bean) are managed. The framework can create beans for you and inject them as dependencies to other beans
+
+**Bring is a dependency injection framework**.
+It uses IoC (Inversion of Control) container, which is represented by ApplicationContext where beans are managed. The framework can create beans for you and inject them as dependencies to other beans
 
 ## Quick Start
 
----
+
 To install Bring locally you should:
 
 * clone repo ```https://github.com/hoverla-bobocode/Bring.git```
@@ -28,7 +25,7 @@ To install Bring locally you should:
 ```
 
 ```java
-ApplicationContext it's main API for working with bean's at runtime.
+ApplicationContext its main API for working with beans at runtime.
 Example:
 
 private ApplicationContext getApplicationContext(String packageToScan) {
@@ -36,3 +33,17 @@ private ApplicationContext getApplicationContext(String packageToScan) {
 }
 ```
 
+---
+Creation components of ApplicationContext:
+
+* BeanDefinitionMapper. Using to create BeanDefinition.
+* BeanAnnotationScanner. Using for scan packages to find classes annotated with Bean and create it at ApplicationContext.
+* BeanDependencyNameResolver. Its util class using to resolve BeanDependency names.
+* BeanInitializer. Using for initialize beans.
+---
+Main API (annotations):
+* Autowired
+* Bean
+* Configuration
+* Primary
+* Value
